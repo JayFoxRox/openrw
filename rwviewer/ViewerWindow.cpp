@@ -142,7 +142,7 @@ void ViewerWindow::loadGame()
 {
 	QString dir = QFileDialog::getExistingDirectory(
 		this, tr("Open Directory"),
-		 QDir::homePath(),
+		 "/tmp/gta3/game/",
 		 QFileDialog::ShowDirsOnly
 		 | QFileDialog::DontResolveSymlinks);
 
@@ -164,8 +164,8 @@ void ViewerWindow::loadGame(const QString &path)
 
 		// Initalize all the archives.
 		gameWorld->data->loadIMG("/models/gta3");
-		gameWorld->data->loadIMG("/models/txd");
-		gameWorld->data->loadIMG("/anim/cuts");
+//		gameWorld->data->loadIMG("/models/txd");
+//		gameWorld->data->loadIMG("/anim/cuts");
 
 		loadedData(gameWorld);
 	}
