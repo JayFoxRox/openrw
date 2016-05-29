@@ -217,6 +217,9 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 	
 	auto entryDoor = vehicle->getSeatEntryDoor(seat);
 
+	auto anm_steal = character->animations.car_open_lhs;
+	auto anm_steal_victim = character->animations.car_open_lhs;
+
 	auto anm_open = character->animations.car_open_lhs;
 	auto anm_enter = character->animations.car_getin_lhs;
 	
@@ -239,6 +242,12 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 			else {
 				//character->setPosition(vehicle->getSeatEntryPosition(seat));
 				character->rotation = vehicle->getRotation();
+			}
+		}
+		else if( character->animator->getAnimation(AnimIndexAction) == anm_steal ) {
+			if( character->animator->isCompleted(AnimIndexAction) ) {
+				// VehicleGetIn is over, finish activity
+				return true;
 			}
 		}
 		else if( character->animator->getAnimation(AnimIndexAction) == anm_enter ) {
@@ -266,8 +275,16 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 			// Determine if the door open animation should be skipped.
 			if( entryDoor == nullptr || (entryDoor->constraint != nullptr && glm::abs(entryDoor->constraint->getHingeAngle()) >= 0.6f ) )
 			{
-				character->playActivityAnimation(anm_enter, false, true);
-				character->enterVehicle(vehicle, seat);
+				auto occupant = static_cast<CharacterObject*>(vehicle->getOccupant(seat));
+				if (occupant != nullptr) {
+					occupant->enterVehicle(nullptr, 0);
+					occupant->playActivityAnimation(anm_steal_victim, false, true);
+					character->playActivityAnimation(anm_steal, false, true);
+					character->enterVehicle(vehicle, seat);
+				} else {
+					character->playActivityAnimation(anm_enter, false, true);
+					character->enterVehicle(vehicle, seat);
+				}
 			}
 			else
 			{
