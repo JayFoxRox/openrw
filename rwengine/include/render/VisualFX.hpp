@@ -31,8 +31,8 @@ public:
 		/** Particle orientation modes */
 		enum Orientation {
 			Free, /** faces direction using up */
-			Camera, /** Faces towards the camera @todo implement */
-			UpCamera /** Face closes point in camera's look direction */
+			Camera, /** Faces towards the camera */
+			UpCamera /** Faces towards camera but can only spin around `direction` axis */
 		};
 		Orientation orientation;
 

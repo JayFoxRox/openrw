@@ -49,9 +49,9 @@ CharacterObject::CharacterObject(GameWorld* engine, const glm::vec3& pos, const 
 	animations.car_sit     = engine->data->animations["car_sit"];
 	animations.car_sit_low = engine->data->animations["car_lsit"];
 
-	animations.car_open_lhs   = engine->data->animations["car_open_lhs"];
+	animations.car_open_lhs   = engine->data->animations["car_crawloutlhs"];
 	animations.car_getin_lhs   = engine->data->animations["car_getin_lhs"];
-	animations.car_getout_lhs   = engine->data->animations["car_getout_lhs"];
+	animations.car_getout_lhs   = engine->data->animations["car_crawloutlhs"];
 	
 	animations.car_open_rhs   = engine->data->animations["car_open_rhs"];
 	animations.car_getin_rhs   = engine->data->animations["car_getin_rhs"];

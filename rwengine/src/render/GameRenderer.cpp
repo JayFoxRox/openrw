@@ -616,7 +616,6 @@ void GameRenderer::renderEffects(GameWorld* world)
 	renderer->useProgram( particleProg );
 
 	auto cpos = _camera.position;
-	auto cfwd = glm::normalize(glm::inverse(_camera.rotation) * glm::vec3(0.f, 1.f, 0.f));
 	
 	auto& effects = world->effects;
 
@@ -628,7 +627,7 @@ void GameRenderer::renderEffects(GameWorld* world)
 	for(VisualFX* fx : effects) {
 		// Other effects not implemented yet
 		if( fx->getType() != VisualFX::Particle ) continue;
-		
+
 		auto& particle = fx->particle;
 
 		auto& p = particle.position;
@@ -640,30 +639,36 @@ void GameRenderer::renderEffects(GameWorld* world)
 		glm::vec3 ptc = particle.up;
 
 		if( particle.orientation == VisualFX::ParticleData::UpCamera ) {
-			ptc = glm::normalize(amp - (glm::dot(amp, cfwd))*cfwd);
+			// Axis aligned billboard (World space)
+			// Look at camera but only allow spinning around `particle.direction`
+			// This is called a vector rejection of `amp` along `particle.direction`
+			auto v = glm::normalize(particle.direction);
+			ptc = amp - glm::dot(amp, v) * v;
 		}
 		else if( particle.orientation == VisualFX::ParticleData::Camera ) {
+			// Point-Sprite (World space)
+			// Always look straight at the camera
 			ptc = amp;
 		}
 
 		glm::vec3 f = glm::normalize(particle.direction);
-		glm::vec3 s = glm::cross(f, glm::normalize(ptc));
-		glm::vec3 u	= glm::cross(s, f);
+		glm::vec3 s = glm::normalize(glm::cross(f, glm::normalize(ptc)));
+		glm::vec3 u = glm::cross(s, glm::normalize(ptc));
+		// `particle.direction` and `ptc` might not have been perpendicular to each other, recalculate
+		f = glm::cross(s, u);
 		m[0][0] = s.x;
 		m[1][0] = s.y;
 		m[2][0] = s.z;
-		m[0][1] =-f.x;
-		m[1][1] =-f.y;
-		m[2][1] =-f.z;
-		m[0][2] = u.x;
-		m[1][2] = u.y;
-		m[2][2] = u.z;
+		m[0][1] = u.x;
+		m[1][1] = u.y;
+		m[2][1] = u.z;
+		m[0][2] = f.x;
+		m[1][2] = f.y;
+		m[2][2] = f.z;
 		m[3][0] =-glm::dot(s, p);
-		m[3][1] = glm::dot(f, p);
-		m[3][2] =-glm::dot(u, p);
+		m[3][1] =-glm::dot(u, p);
+		m[3][2] =-glm::dot(f, p);
 		m = glm::scale(glm::inverse(m), glm::vec3(particle.size, 1.f));
-
-		//m = glm::translate(m, p);
 
 		Renderer::DrawParameters dp;
 		dp.textures = {particle.texture->getName()};

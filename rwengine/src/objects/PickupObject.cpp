@@ -84,7 +84,7 @@ PickupObject::PickupObject(GameWorld *world, const glm::vec3 &position, int mode
 	m_corona = world->createEffect(VisualFX::Particle);
 	m_corona->particle.position = getPosition();
 	m_corona->particle.direction = glm::vec3(0.f, 0.f, 1.f);
-	m_corona->particle.orientation = VisualFX::ParticleData::Camera;
+	m_corona->particle.orientation = VisualFX::ParticleData::UpCamera;
 	m_corona->particle.colour = glm::vec4(1.0f, 0.3f, 0.3f, 0.3f);
 	m_corona->particle.texture = engine->data->findTexture("coronacircle");
 

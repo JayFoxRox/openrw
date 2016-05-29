@@ -328,7 +328,7 @@ bool Activities::ExitVehicle::update(CharacterObject *character, CharacterContro
 	}
 
 	if( character->animator->getAnimation(AnimIndexAction) == anm_exit ) {
-		if( character->animator->isCompleted(AnimIndexAction) ) {
+//		if( character->animator->isCompleted(AnimIndexAction) ) {
 			auto exitpos = vehicle->getSeatEntryPosition(seat);
 
 			character->enterVehicle(nullptr, seat);
@@ -342,7 +342,7 @@ bool Activities::ExitVehicle::update(CharacterObject *character, CharacterContro
 			}
 
 			return true;
-		}
+//		}
 	}
 	else {
 		character->playActivityAnimation(anm_exit, false, true);
