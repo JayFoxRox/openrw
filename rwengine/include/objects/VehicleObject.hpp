@@ -103,9 +103,9 @@ public:
 	 */
 	bool isOccupantDriver(size_t seat) const;
 
-	glm::vec3 getSeatEntryPosition(size_t seat) const {
+	glm::vec3 getSeatPosition(size_t seat) const {
 		auto pos = info->seats[seat].offset;
-		pos -= glm::vec3(glm::sign(pos.x) * -0.81756252f, 0.34800607f, -0.486281008f);
+//		pos -= glm::vec3(glm::sign(pos.x) * -0.81756252f, 0.34800607f, -0.486281008f);
 		return getPosition() + getRotation() * pos;
 	}
 	

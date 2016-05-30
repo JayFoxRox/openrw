@@ -190,8 +190,16 @@ namespace Activities {
 	struct ExitVehicle : public CharacterController::Activity {
 		DECL_ACTIVITY( ExitVehicle )
 
-		ExitVehicle( )
-			{}
+    typedef enum {
+      REASON_LEAVING,
+      REASON_QUICK_JACKED,
+      REASON_PULLED_OUT
+    } Reason;
+
+    Reason reason;
+
+		ExitVehicle(Reason reason = REASON_LEAVING)
+			: reason( reason ) {}
 
 		bool update(CharacterObject *character, CharacterController *controller);
 	};

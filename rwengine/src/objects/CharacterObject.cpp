@@ -9,7 +9,7 @@
 #include <rw/defines.hpp>
 
 // TODO: make this not hardcoded
-static glm::vec3 enter_offset(0.81756252f, 0.34800607f, -0.486281008f);
+//static glm::vec3 enter_offset(0.81756252f, 0.34800607f, -0.486281008f);
 
 const float CharacterObject::DefaultJumpSpeed = 2.f;
 
@@ -49,6 +49,9 @@ CharacterObject::CharacterObject(GameWorld* engine, const glm::vec3& pos, const 
 	animations.car_sit     = engine->data->animations["car_sit"];
 	animations.car_sit_low = engine->data->animations["car_lsit"];
 
+	animations.car_qjack   = engine->data->animations["car_qjack"]; // char opening door + entering car
+	animations.car_qjacked = engine->data->animations["car_qjacked"]; // char left car
+
 	animations.car_open_lhs   = engine->data->animations["car_open_lhs"];
 	animations.car_getin_lhs   = engine->data->animations["car_getin_lhs"];
 	animations.car_getout_lhs   = engine->data->animations["car_getout_lhs"];
@@ -56,6 +59,9 @@ CharacterObject::CharacterObject(GameWorld* engine, const glm::vec3& pos, const 
 	animations.car_open_rhs   = engine->data->animations["car_open_rhs"];
 	animations.car_getin_rhs   = engine->data->animations["car_getin_rhs"];
 	animations.car_getout_rhs   = engine->data->animations["car_getout_rhs"];
+
+//	animations.car_pullout_lhs   = engine->data->animations["car_pullout_lhs"]; // door opened before, char not entering car!
+//	animations.car_jackedlhs   = engine->data->animations["car_jackedlhs"]; // char left car
 
 	animations.kd_front   = engine->data->animations["kd_front"];
 	animations.ko_shot_front   = engine->data->animations["ko_shot_front"];
@@ -395,6 +401,21 @@ void CharacterObject::setPosition(const glm::vec3& pos)
 	position = pos;
 }
 
+AnimationKeyframe CharacterObject::getRoot(Animation* animation, float time) const
+{
+	// Place the character where the animation wants him
+	auto& children = model->resource->frames[0]->getChildren();
+	if( ! children.empty()) {
+		ModelFrame* root = children[0];
+		auto it = animation->bones.find(root->getName());
+		if (it != animation->bones.end()) {
+			AnimationBone* rootBone = it->second;
+			return rootBone->getInterpolatedKeyframe(time);
+		}
+	}
+	return {};
+}
+
 glm::vec3 CharacterObject::getPosition() const
 {
 	if(physCharacter) {
@@ -402,18 +423,28 @@ glm::vec3 CharacterObject::getPosition() const
 		return glm::vec3(Pos.x(), Pos.y(), Pos.z());
 	}
 	if(currentVehicle) {
-		/// @todo this is hacky.
-		if( animator->getAnimation(AnimIndexAction) == animations.car_getout_lhs ) {
-			return currentVehicle->getSeatEntryPosition(currentSeat);
-		}
+
+		glm::vec3 o = {};
+		auto animation = animator->getAnimation(AnimIndexAction);
 
 		auto v = getCurrentVehicle();
-		auto R = glm::mat3_cast(v->getRotation());
+		auto R = v->getRotation();
 		glm::vec3 offset;
-		auto o = (animator->getAnimation(AnimIndexAction) == animations.car_getin_lhs) ? enter_offset : glm::vec3();
+
+		// Car exit animations
+		if(animation == animations.car_qjacked ||
+		   animation == animations.car_getout_lhs ) {
+			o = -getRoot(animations.car_getout_lhs, 0.0f).position;
+		}
+
+		// Car enter animations
+		if (animation == animations.car_qjack ||
+		    animation == animations.car_getin_lhs) {
+			o = -getRoot(animations.car_getout_lhs, 0.0f).position;
+		}
+
 		if(getCurrentSeat() < v->info->seats.size()) {
-			offset = R * (v->info->seats[getCurrentSeat()].offset -
-					o);
+			offset = R * (v->info->seats[getCurrentSeat()].offset + o);
 		}
 		return currentVehicle->getPosition() + offset;
 	}

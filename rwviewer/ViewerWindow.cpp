@@ -132,7 +132,7 @@ void ViewerWindow::closeEvent(QCloseEvent* event)
 
 void ViewerWindow::openAnimations()
 {
-	QFileDialog dialog(this, "Open Animations", QDir::homePath(), "IFP Animations (*.ifp)");
+	QFileDialog dialog(this, "Open Animations", "/tmp/gta3/game/anim/ped.ifp", "IFP Animations (*.ifp)");
 	if(dialog.exec()) {
 		loadAnimations(dialog.selectedFiles()[0]);
 	}
