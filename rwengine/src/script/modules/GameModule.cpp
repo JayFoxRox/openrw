@@ -407,6 +407,69 @@ void game_create_garage(const ScriptArguments& args)
 	*args[7].globalInteger = garageIndex;
 }
 
+bool game_is_car_inside_garage(const ScriptArguments& args)
+{
+	/// @todo move to garage code
+
+	GameWorld* gw = args.getWorld();
+	const auto& garages = gw->state->garages;
+	int garageIndex = args[0].integerValue();
+
+	RW_CHECK(garageIndex >= 0, "Garage index too small");
+	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
+	const auto& garage = garages[garageIndex];
+
+	for(auto& v : gw->vehiclePool.objects)
+	{
+		// @todo if this car only accepts mission cars we probably have to filter here / only check for one specific car
+		auto vp = v.second->getPosition();
+		if( vp.x >= garage.min.x && vp.y >= garage.min.y && vp.z >= garage.min.z &&
+				vp.x <= garage.max.x && vp.y <= garage.max.y && vp.z <= garage.max.z )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool game_garage_contains_car(const ScriptArguments& args)
+{
+	/// @todo move to garage code
+
+	GameWorld* gw = args.getWorld();
+	const auto& garages = gw->state->garages;
+	int garageIndex = args[0].integerValue();
+
+	RW_CHECK(garageIndex >= 0, "Garage index too small");
+	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
+	const auto& garage = garages[garageIndex];
+
+	/// @todo very cruel hack to open the luigi lockup garage door. Should be removed / moved to garage code!
+	for(auto& i : gw->instancePool.objects)
+	{
+		auto obj = static_cast<InstanceObject*>(i.second);
+		if(obj->model->name == "oddjgaragdoor")
+		{
+			gw->destroyObjectQueued(obj);
+		}
+	}
+
+	auto vehicle = static_cast<VehicleObject*>(args.getObject<VehicleObject>(1));
+	if( vehicle )
+	{
+		/// @todo if this car only accepts mission cars we probably have to filter here / only check for one specific car
+		auto vp = vehicle->getPosition();
+		if( vp.x >= garage.min.x && vp.y >= garage.min.y && vp.z >= garage.min.z &&
+				vp.x <= garage.max.x && vp.y <= garage.max.y && vp.z <= garage.max.z )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void game_disable_ped_paths(const ScriptArguments& args)
 {
 	glm::vec3 min(args[0].real,args[1].real,args[2].real);
@@ -1038,6 +1101,9 @@ GameModule::GameModule()
 
 	bindFunction(0x0219, game_create_garage, 8, "Create Garage" );
 
+	bindUnimplemented(0x021B, game_set_target_car_for_mission_garage, 2, "Set Target Car for Mission Garage" );
+	bindFunction(0x021C, game_is_car_inside_garage, 1, "Is Car Inside Garage" );
+
 	bindFunction(0x022A, game_disable_ped_paths, 6, "Disable ped paths" );
 	bindFunction(0x022B, game_enable_ped_paths, 6, "Disable ped paths" );
 
@@ -1206,6 +1272,7 @@ GameModule::GameModule()
 	bindUnimplemented( 0x041E, game_set_radio, 2, "Set Radio Station" );
 
 	bindUnimplemented( 0x0421, game_force_rain, 1, "Force Rain" );
+	bindFunction( 0x0422, game_garage_contains_car, 2, "Garage Contains Car" );
 
 	bindUnimplemented( 0x0426, game_create_level_transition, 6, "Create Save Cars Between Levels cube" );
 	
