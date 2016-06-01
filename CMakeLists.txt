@@ -25,6 +25,9 @@ option(ENABLE_PROFILING "Enable detailed profiling metrics")
 #
 # Build configuration
 #
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release" FORCE)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_definitions(-DRW_LINUX)
