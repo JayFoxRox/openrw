@@ -402,9 +402,74 @@ void game_create_garage(const ScriptArguments& args)
 	args.getWorld()->state->garages.push_back({
 		min, max, garageType
 	});
+	int garageIndex = args.getWorld()->state->garages.size() - 1;
 	
-	// TODO actually store the garage information and return the handle
-	*args[7].globalInteger = args.getWorld()->state->garages.size()-1;
+	*args[7].globalInteger = garageIndex;
+}
+
+bool game_is_car_inside_garage(const ScriptArguments& args)
+{
+	/// @todo move to garage code
+
+	GameWorld* gw = args.getWorld();
+	const auto& garages = gw->state->garages;
+	int garageIndex = args[0].integerValue();
+
+printf("Checking garage %d for car!\n", garageIndex);
+	RW_CHECK(garageIndex >= 0, "Garage index too small");
+	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
+	const auto& garage = garages[garageIndex];
+
+	for(auto& v : gw->vehiclePool.objects)
+	{
+		// @todo if this car only accepts mission cars we probably have to filter here / only check for one specific car
+		auto vp = v.second->getPosition();
+		if( vp.x >= garage.min.x && vp.y >= garage.min.y && vp.z >= garage.min.z &&
+				vp.x <= garage.max.x && vp.y <= garage.max.y && vp.z <= garage.max.z )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool game_garage_contains_car(const ScriptArguments& args)
+{
+	/// @todo move to garage code
+
+	GameWorld* gw = args.getWorld();
+	const auto& garages = gw->state->garages;
+	int garageIndex = args[0].integerValue();
+
+printf("Checking garage %d for specific car!\n", garageIndex);
+	RW_CHECK(garageIndex >= 0, "Garage index too small");
+	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
+	const auto& garage = garages[garageIndex];
+
+	/// @todo very cruel hack to open the luigi lockup garage door. Should be removed / moved to garage code!
+	for(auto& i : gw->instancePool.objects)
+	{
+		auto obj = static_cast<InstanceObject*>(i.second);
+		if(obj->model->name == "oddjgaragdoor")
+		{
+			gw->destroyObjectQueued(obj);
+		}
+	}
+
+	auto vehicle = static_cast<VehicleObject*>(args.getObject<VehicleObject>(1));
+	if( vehicle )
+	{
+		/// @todo if this car only accepts mission cars we probably have to filter here / only check for one specific car
+		auto vp = vehicle->getPosition();
+		if( vp.x >= garage.min.x && vp.y >= garage.min.y && vp.z >= garage.min.z &&
+				vp.x <= garage.max.x && vp.y <= garage.max.y && vp.z <= garage.max.z )
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void game_disable_ped_paths(const ScriptArguments& args)
@@ -701,6 +766,30 @@ void game_set_zone_ped_group(const ScriptArguments& args)
 	}
 }
 
+bool game_has_respray_happened(const ScriptArguments& args)
+{
+	const auto& garages = args.getWorld()->state->garages;
+	int garageIndex = args[0].integerValue();
+
+	RW_CHECK(garageIndex >= 0, "Garage index too small");
+	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
+	const auto& garage = garages[garageIndex];
+
+	if (garage.type != GarageInfo::GARAGE_RESPRAY) {
+		return false;
+	}
+
+	auto playerobj = args.getWorld()->pedestrianPool.find(args.getState()->playerObject);
+	auto pp = playerobj->getPosition();
+	if( pp.x >= garage.min.x && pp.y >= garage.min.y && pp.z >= garage.min.z &&
+			pp.x <= garage.max.x && pp.y <= garage.max.y && pp.z <= garage.max.z )
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void game_display_text(const ScriptArguments& args)
 {
 	glm::vec2 pos(args[0].real, args[1].real);
@@ -789,10 +878,9 @@ void game_load_audio(const ScriptArguments& args)
 {
 	std::string name = args[0].string;
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-	if(! args.getWorld()->data->loadAudioClip(name + ".wav") )
-	{
-		if(! args.getWorld()->data->loadAudioClip(name + ".mp3") )
-		{
+
+	if ( ! args.getWorld()->data->loadAudioClip(name, name + ".wav")) {
+		if ( ! args.getWorld()->data->loadAudioClip(name, name + ".mp3")) {
 			args.getWorld()->logger->error("SCM", "Failed to load audio: " + name);
 		}
 	}
@@ -801,22 +889,26 @@ void game_load_audio(const ScriptArguments& args)
 bool game_is_audio_loaded(const ScriptArguments& args)
 {
 	auto world = args.getWorld();
-	return world->missionAudio != nullptr;
+	return world->sound.isLoaded(world->missionAudio);
 }
 
 void game_play_mission_audio(const ScriptArguments& args)
 {
 	auto world = args.getWorld();
-	if ( world->missionAudio )
-	{
-		world->missionSound.setBuffer(*args.getWorld()->missionAudio);
-		world->missionSound.play();
-		world->missionSound.setLoop(false);
+	if (world->missionAudio.length() > 0) {
+		world->sound.playSound(world->missionAudio);
 	}
 }
 bool game_is_audio_finished(const ScriptArguments& args)
 {
-	return args.getWorld()->missionSound.getStatus() == sf::SoundSource::Stopped;
+	auto world = args.getWorld();
+	bool isFinished = ! world->sound.isPlaying(world->missionAudio);
+
+	if (isFinished) {
+		world->missionAudio = "";
+	}
+
+	return isFinished;
 }
 
 void game_play_music_id(const ScriptArguments& args)
@@ -828,16 +920,47 @@ void game_play_music_id(const ScriptArguments& args)
 	std::string name = "Miscom";
 	
 	// TODO play anything other than Miscom.wav
-	if(! gw->data->loadAudioClip( name + ".wav" ) )
+	if(! gw->data->loadAudioClip( name, name + ".wav" ) )
 	{
 		args.getWorld()->logger->error("SCM", "Error loading audio " + name);
 		return;
 	}
-	else if ( args.getWorld()->missionAudio )
+	else if (args.getWorld()->missionAudio.length() > 0)
 	{
-		gw->missionSound.setBuffer(* args.getWorld()->missionAudio);
-		gw->missionSound.play();
-		gw->missionSound.setLoop(false);
+		args.getWorld()->sound.playSound(args.getWorld()->missionAudio);
+	}
+}
+
+void game_clear_area(const ScriptArguments& args)
+{
+	glm::vec3 position(args[0].real, args[1].real, args[2].real);
+	float radius = args[3].real;
+	bool clearParticles = args[4].integer;
+
+	GameWorld* gw = args.getWorld();
+
+	for(auto& v : gw->vehiclePool.objects)
+	{
+		if( glm::distance(position, v.second->getPosition()) < radius )
+		{
+			gw->destroyObjectQueued(v.second);
+		}
+	}
+
+	for(auto& p : gw->pedestrianPool.objects)
+	{
+		if( glm::distance(position, p.second->getPosition()) < radius )
+		{
+			gw->destroyObjectQueued(p.second);
+		}
+	}
+
+	/// @todo Do we also have to clear all projectiles + particles *in this area*, even if the bool is false?
+
+	if (clearParticles)
+	{
+		RW_UNUSED(clearParticles);
+		RW_UNIMPLEMENTED("game_clear_area(): should clear all particles and projectiles (not limited to area!)");
 	}
 }
 
@@ -1037,6 +1160,9 @@ GameModule::GameModule()
 
 	bindFunction(0x0219, game_create_garage, 8, "Create Garage" );
 
+	bindUnimplemented(0x021B, game_set_target_car_for_mission_garage, 2, "Set Target Car for Mission Garage" );
+	bindFunction(0x021C, game_is_car_inside_garage, 1, "Is Car Inside Garage" );
+
 	bindFunction(0x022A, game_disable_ped_paths, 6, "Disable ped paths" );
 	bindFunction(0x022B, game_enable_ped_paths, 6, "Disable ped paths" );
 
@@ -1105,8 +1231,11 @@ GameModule::GameModule()
 	bindFunction(0x0324, game_set_zone_ped_group, 3, "Set zone ped group" );
 	bindUnimplemented( 0x0325, game_create_car_fire, 2, "Create Car Fire" );
 
+	bindFunction( 0x0329, game_has_respray_happened, 1, "Has Respray Happened" );
+
 	bindUnimplemented( 0x032B, game_create_weapon_pickup, 7, "Create Weapon Pickup" );
 
+	bindUnimplemented( 0x0335, game_free_resprays, 1, "Set Free Respray" );
 	bindUnimplemented( 0x0336, game_set_character_visible, 2, "Set Player Visible" );
 
 	bindFunction(0x033E, game_display_text, 3, "Display Text" );
@@ -1132,7 +1261,7 @@ GameModule::GameModule()
 	bindUnimplemented( 0x038B, game_load_models_now, 0, "Load Requested Models Now" );
 	
 	bindFunction(0x0394, game_play_music_id, 1, "Play music");
-	bindUnimplemented( 0x0395, game_clear_area, 5, "Clear Area Vehicles and Pedestrians" );
+	bindFunction(0x0395, game_clear_area, 5, "Clear Area Vehicles and Pedestrians" );
 	
 	bindUnimplemented( 0x0397, game_set_vehicle_siren, 2, "Set Vehicle Siren" );
 	
@@ -1205,6 +1334,7 @@ GameModule::GameModule()
 	bindUnimplemented( 0x041E, game_set_radio, 2, "Set Radio Station" );
 
 	bindUnimplemented( 0x0421, game_force_rain, 1, "Force Rain" );
+	bindFunction( 0x0422, game_garage_contains_car, 2, "Garage Contains Car" );
 
 	bindUnimplemented( 0x0426, game_create_level_transition, 6, "Create Save Cars Between Levels cube" );
 	
