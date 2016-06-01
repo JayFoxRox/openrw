@@ -415,6 +415,7 @@ bool game_is_car_inside_garage(const ScriptArguments& args)
 	const auto& garages = gw->state->garages;
 	int garageIndex = args[0].integerValue();
 
+printf("Checking garage %d for car!\n", garageIndex);
 	RW_CHECK(garageIndex >= 0, "Garage index too small");
 	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
 	const auto& garage = garages[garageIndex];
@@ -441,6 +442,7 @@ bool game_garage_contains_car(const ScriptArguments& args)
 	const auto& garages = gw->state->garages;
 	int garageIndex = args[0].integerValue();
 
+printf("Checking garage %d for specific car!\n", garageIndex);
 	RW_CHECK(garageIndex >= 0, "Garage index too small");
 	RW_CHECK(garageIndex < static_cast<int>(garages.size()), "Garage index too large");
 	const auto& garage = garages[garageIndex];

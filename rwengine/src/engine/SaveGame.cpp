@@ -627,6 +627,15 @@ bool SaveGame::loadGame(GameState& state, const std::string& file)
 		READ_VALUE(garages[i]);
 	}
 
+unsigned int* foo = (unsigned int*)state.script->getGlobals();
+printf("Garage pay'n'spray 1: 0x%08X\n", foo[62]);
+printf("Garage pay'n'spray 2: 0x%08X\n", foo[72]);
+printf("Garage pay'n'spray 3: 0x%08X\n", foo[93]);
+
+printf("Garage var $60: 0x%08X\n", foo[60]);
+printf("Garage var $61: 0x%08X\n", foo[61]);
+printf("Garage var $62: 0x%08X\n", foo[62]);
+
 #if RW_DEBUG
 	std::cout << "Garages: " << garageData.garageCount << std::endl;
 	std::cout << "Bombs Free: " << garageData.freeBombs << std::endl;
