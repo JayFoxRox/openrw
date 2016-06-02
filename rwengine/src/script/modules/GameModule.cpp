@@ -359,10 +359,11 @@ void game_print_big_with_number(const ScriptArguments& args)
 			ScreenText::format(
 				args.getWorld()->data->texts.text(id),
 				formatValue(args[1]));
+	int time = args[2].integer;
 	unsigned short style = args[3].integer;
 	args.getWorld()->state->text.addText<ScreenTextType::Big>(
 				ScreenTextEntry::makeBig(
-					id, str, style, 5000
+					id, str, style, time
 					));
 }
 
