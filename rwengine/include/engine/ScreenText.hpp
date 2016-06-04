@@ -12,16 +12,18 @@ enum class ScreenTextType
 	/// Big text will be rendered according to the proscribed style.
 	/// Adding a 2nd big text will cause the first to terminate.
 	Big = 0,
-	/// See Big, will wait for any Big text to finish.
-	BigLowPriority = 1,
 	/// Will be cleared by the clear help opcode
-	Help = 2,
+	Help = 1,
 	/// Automatically cleared after each tick, for generic text.
-	Immediate = 3,
-	/// High priority cutscene text
-	HighPriority = 4,
+	Immediate = 2,
+	/// Text near bottom of screen
+	Normal = 3,
+	/// Low priority text near bottom of screen
+	NormalLowPriority = 4,
+	/// High priority text near bottom of screen
+	NormalHighPriority = 5,
 	///
-	_Count = 5
+	_Count
 };
 constexpr unsigned int ScreenTypeTextCount = static_cast<unsigned int>(ScreenTextType::_Count);
 
@@ -60,7 +62,7 @@ struct ScreenTextEntry
 							int style,
 							int durationMS);
 
-	static ScreenTextEntry makeHighPriority(const std::string& id,
+	static ScreenTextEntry makeNormal(const std::string& id,
 							const std::string& str,
 							int durationMS);
 
@@ -75,13 +77,13 @@ struct ScreenTextEntry
  *
  * There are 4 text pool types:
  * - Big Text
- * - (low priority) Big Text
  * - Help Text
- * - Immediate Text
+ * - Normal Text (optional low or high priority)
  *
  * Only one Big Text can be drawn at a time, adding a second will
- * cause the first to end prematurely. Low priority big text will
- * only display if there is no regular big text.
+ * cause the first to end prematurely. Low priority text will
+ * only display if there is no regular text. High priority will always be
+ * printed.
  *
  * Help text.
  *

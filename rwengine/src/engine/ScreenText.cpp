@@ -156,7 +156,7 @@ ScreenTextEntry ScreenTextEntry::makeBig(const std::string& id, const std::strin
 	};
 }
 
-ScreenTextEntry ScreenTextEntry::makeHighPriority(const std::string& id, const std::string& str, int durationMS)
+ScreenTextEntry ScreenTextEntry::makeNormal(const std::string& id, const std::string& str, int durationMS)
 {
 	// Color: ?
 	// Font: Arial
@@ -166,7 +166,7 @@ ScreenTextEntry ScreenTextEntry::makeHighPriority(const std::string& id, const s
 	// @todo verify: Size: 15 Pixel high letters ('S', 'l')
 	return {
 		str,
-		{320.f, 420.f},
+		{320.f, 431.f},
 		2,
 		18,
 		{1, 0, 0, 0},
