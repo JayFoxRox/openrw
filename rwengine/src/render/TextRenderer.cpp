@@ -4,6 +4,14 @@
 
 #include <algorithm>
 
+/// This considers each glyph is 64x80 pixels on a 1024x1024 texture.
+/// The grid starts at (0,0)
+
+constexpr float arialScaleFactor = 80.0f / 48.0f; /// Each glyph has 80 pixels space, high letters such as 'S' are around 48 pixels high
+constexpr float arialBaseOffset = 64.0f / 80.0f; /// The baseline of most letters is 64 pixels from the top of the glyph 
+constexpr float pricedownScaleFactor = arialScaleFactor; /// @todo confirm
+constexpr float pricedownBaseOffset = arialBaseOffset; /// @todo confirm
+
 /// @todo This is very rough
 int charToIndex(char g)
 {
@@ -191,7 +199,9 @@ void TextRenderer::renderText(const TextRenderer::TextInfo& ti, bool forceColour
 	// We should track real size not just chars.
 	auto lineLength = 0;
 	
-	glm::vec2 ss( ti.size );
+	float fontSize = ti.size * arialScaleFactor;
+
+	glm::vec2 ss( fontSize );
 
 	glm::vec3 colour = glm::vec3(ti.baseColour) * (1/255.f);
 	glm::vec4 colourBG  = glm::vec4(ti.backgroundColour) * (1/255.f);
@@ -283,7 +293,7 @@ void TextRenderer::renderText(const TextRenderer::TextInfo& ti, bool forceColour
 		auto& data = glyphData[glyph];
 		auto tex = indexToCoord(ti.font, glyph);
 		
-		ss.x = ti.size * data.widthFrac;
+		ss.x = fontSize * data.widthFrac;
 		tex.z = tex.x + (tex.z - tex.x) * data.widthFrac;
 		
 		// Handle special chars.
@@ -320,7 +330,7 @@ void TextRenderer::renderText(const TextRenderer::TextInfo& ti, bool forceColour
 		alignment.x -= (maxWidth / 2.f);
 	}
 
-	alignment.y -= ti.size * 0.2f;
+	alignment.y -= fontSize * arialBaseOffset;
 
 	// If we need to, draw the background.
 	if (colourBG.a > 0.f)
