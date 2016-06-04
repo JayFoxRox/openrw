@@ -9,6 +9,13 @@ add_library(rwengine
     ${RENDERWARE_HEADERS}
 )
 
+if(MINGW)
+	add_definitions(-D _USE_MATH_DEFINES)
+	# set_target_properties(rwengine
+    # PROPERTIES
+	# CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include rw_mingw.hpp")
+endif()
+
 target_link_libraries(rwengine
 	rwlib
 	${MAD_LIBRARY}

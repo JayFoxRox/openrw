@@ -23,16 +23,22 @@ add_executable(rwgame
 include_directories(SYSTEM
 	${BULLET_INCLUDE_DIR}
 	${SFML_INCLUDE_DIR}
+	${OPENAL_INCLUDE_DIR}
 	)
 include_directories(
 	"${CMAKE_SOURCE_DIR}/rwengine/include"
 	)
-
 target_link_libraries( rwgame
 	rwengine
 	inih
 	${SFML_LIBRARIES}
 	${OPENGL_LIBRARIES}
 	${BULLET_LIBRARIES})
+if(MINGW)
+	add_definitions(-D _USE_MATH_DEFINES)
+	target_link_libraries( rwgame
+	iconv
+	mman)
+endif()
 
 install(TARGETS rwgame RUNTIME DESTINATION bin)

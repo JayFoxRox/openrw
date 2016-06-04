@@ -1193,8 +1193,11 @@ bool SaveGame::loadGame(GameState& state, const std::string& file)
 	
 	return true;
 }
-
+#ifndef RW_WINDOWS
 #include <dirent.h>
+#else
+#include <platform/msdirent.h>
+#endif
 bool SaveGame::getSaveInfo(const std::string& file, BasicState *basicState)
 {
 	std::FILE* loadFile = std::fopen(file.c_str(), "r");
