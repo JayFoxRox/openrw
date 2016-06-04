@@ -10,10 +10,7 @@ add_library(rwengine
 )
 
 if(MINGW)
-	add_definitions(-D _USE_MATH_DEFINES)
-	# set_target_properties(rwengine
-    # PROPERTIES
-	# CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include rw_mingw.hpp")
+	add_definitions(-D _USE_MATH_DEFINES)	
 endif()
 
 target_link_libraries(rwengine
