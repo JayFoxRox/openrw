@@ -66,6 +66,18 @@ void game_print_now(const ScriptArguments& args)
 					));
 }
 
+void game_print_soon(const ScriptArguments& args)
+{
+	std::string id(args[0].string);
+	std::string str = args.getWorld()->data->texts.text(id);
+	int time = args[1].integer;
+	unsigned short style = args[2].integerValue(); // same as flags?!
+	args.getWorld()->state->text.addText<ScreenTextType::BigLowPriority>(
+				ScreenTextEntry::makeBig(
+					id, str, style, time
+					));
+}
+
 void game_clear_prints(const ScriptArguments& args)
 {
 	args.getWorld()->state->text.clear<ScreenTextType::Big>();
@@ -1162,6 +1174,7 @@ GameModule::GameModule()
 	
 	bindFunction(0x00BA, game_print_big, 3, "Print big" );
 	bindFunction(0x00BC, game_print_now, 3, "Print Message Now" );
+	bindFunction(0x00BD, game_print_soon, 3, "Print Message Soon" );
 	
 	bindFunction(0x00BE, game_clear_prints, 0, "Clear Message Prints" );
 	bindFunction(0x00BF, game_get_time, 2, "Get Time of Day" );
