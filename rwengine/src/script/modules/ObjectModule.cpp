@@ -846,6 +846,42 @@ bool game_player_in_taxi(const ScriptArguments& args)
 	return (vehicle && (vehicle->vehicle->classType & VehicleData::TAXI) == VehicleData::TAXI);
 }
 
+void game_get_random_character_in_zone(const ScriptArguments& args)
+{
+	std::string zname(args[0].string);
+
+	auto zfind = args.getWorld()->data->zones.find(zname);
+	if( zfind != args.getWorld()->data->zones.end() ) {
+
+		auto playerObject = args.getWorld()->pedestrianPool.find(args.getState()->playerObject);
+		auto player = static_cast<CharacterObject*>(playerObject);
+
+		for(auto& p : args.getWorld()->pedestrianPool.objects) {
+
+			auto character = static_cast<CharacterObject*>(p.second);
+
+			RW_UNIMPLEMENTED("Don't grab script chars!");
+			/// @todo don't grab script objects
+			if (character == player) {
+				continue;
+			}
+
+			auto cp = character->getPosition();
+			auto& min = zfind->second.min;
+			auto& max = zfind->second.max;
+			if (cp.x > min.x && cp.y > min.y && cp.z > min.z &&
+			    cp.x < max.x && cp.y < max.y && cp.z < max.z) {
+				*args[1].globalInteger = p.first;
+				return;
+			}
+
+		}
+
+	}
+
+	*args[1].globalInteger = -1;
+}
+
 void game_get_speed(const ScriptArguments& args)
 {
 	auto vehicle = static_cast<VehicleObject*>(args.getObject<VehicleObject>(0));
@@ -1415,6 +1451,7 @@ ObjectModule::ObjectModule()
 
 	bindFunction(0x02BF, game_is_vehicle_in_water, 1, "Is Vehicle in Water" );
 	
+	bindFunction(0x02DD, game_get_random_character_in_zone, 2, "Get Random Character In Zone");
 	bindFunction(0x02DE, game_player_in_taxi, 1, "Is Player In Taxi" );
 	
 	bindFunction(0x02E3, game_get_speed, 2, "Get Vehicle Speed" );
