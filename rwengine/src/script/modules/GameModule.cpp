@@ -925,6 +925,22 @@ void game_start_chase_scene(const ScriptArguments& args)
 	args.getWorld()->chase.start();
 }
 
+void game_print_big_with_2_numbers(const ScriptArguments& args)
+{
+	std::string id(args[0].string);
+	std::string str =
+			ScreenText::format(
+				args.getWorld()->data->texts.text(id),
+				formatValue(args[1]),
+				formatValue(args[2]));
+	int time = args[3].integer;
+	unsigned short style = args[4].integer;
+	args.getWorld()->state->text.addText<ScreenTextType::Big>(
+				ScreenTextEntry::makeBig(
+					id, str, style, time
+					));
+}
+
 void game_stop_chase_scene(const ScriptArguments& args)
 {
 	// Clean up remaining vehicles
@@ -1361,6 +1377,8 @@ GameModule::GameModule()
 	bindUnimplemented( 0x0353, game_refresh_character_model, 1, "Refresh Actor Model" );
 	bindFunction( 0x0354, game_start_chase_scene, 1, "Start Chase Scene" );
 	bindFunction( 0x0355, game_stop_chase_scene, 0, "Stop Chase Scene" );
+
+	bindFunction(0x036D, game_print_big_with_2_numbers, 5, "Print Big With 2 Numbers");
 
 	bindUnimplemented( 0x0373, game_camera_behind_player, 0, "Set Camera Behind Player" );
 	bindUnimplemented( 0x0374, game_set_motion_blur, 1, "Set Motion Blur" );
