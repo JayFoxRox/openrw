@@ -5,6 +5,7 @@
 #include "DrawUI.hpp"
 
 #include <ai/PlayerController.hpp>
+#include <ai/DefaultAIController.hpp>
 #include <objects/CharacterObject.hpp>
 #include <objects/VehicleObject.hpp>
 #include <objects/ItemPickup.hpp>
@@ -71,6 +72,19 @@ void IngameState::startTest()
 			auto& sp = carPos;
 			auto& sr = carRot;
 			auto v = getWorld()->createVehicle(vi.first, sp, sr);
+
+      for(int j = 0; j < v->info->seats.size(); j++) {
+
+      	auto character = getWorld()->createPedestrian(20, v->getPosition());
+        if (character == nullptr) {
+          continue;
+        }
+	      new DefaultAIController(character);
+	
+	      character->setCurrentVehicle(v, j);
+	      v->setOccupant(j, character);
+
+      }
 
 			sp += sr * glm::vec3( 2.f + v->info->handling.dimensions.x, 0.f, 0.f);
 		}

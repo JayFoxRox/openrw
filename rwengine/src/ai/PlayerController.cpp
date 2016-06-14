@@ -37,7 +37,7 @@ void PlayerController::updateMovementDirection(const glm::vec3& dir, const glm::
 void PlayerController::exitVehicle()
 {
 	if(character->getCurrentVehicle()) {
-		setNextActivity(new Activities::ExitVehicle());
+		setNextActivity(new Activities::ExitVehicle);
 	}
 }
 

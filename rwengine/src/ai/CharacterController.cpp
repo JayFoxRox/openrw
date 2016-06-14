@@ -205,7 +205,7 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 		float nearest = std::numeric_limits<float>::max();
 		for(unsigned int s = 1; s < vehicle->info->seats.size(); ++s)
 		{
-			auto entry = vehicle->getSeatEntryPosition(s);
+			auto entry = vehicle->getSeatPosition(s);
 			float dist = glm::distance(entry, character->getPosition());
 			if( dist < nearest )
 			{
@@ -217,6 +217,8 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 	
 	auto entryDoor = vehicle->getSeatEntryDoor(seat);
 
+	auto anm_quickjack = character->animations.car_qjack;
+
 	auto anm_open = character->animations.car_open_lhs;
 	auto anm_enter = character->animations.car_getin_lhs;
 	
@@ -227,21 +229,32 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 	}
 	
 	if( entering ) {
+
+		if(character->animator->getAnimation(AnimIndexAction) == anm_quickjack) {
+//			if (character->animator->getAnimationTime(AnimIndexAction) >= 0.9f ) {
+	//		} else {
+				//character->setPosition(vehicle->getSeatEntryPosition(seat));
+//				character->rotation = vehicle->getRotation();
+//			}
+			if( entryDoor && character->animator->getAnimationTime(AnimIndexAction) >= 0.1f ) {
+				vehicle->setPartTarget(entryDoor, true, entryDoor->openAngle);
+			}
+		}
+
 		if( character->animator->getAnimation(AnimIndexAction) == anm_open ) {
 			if( character->animator->isCompleted(AnimIndexAction) ) {
 				character->playActivityAnimation(anm_enter, false, true);
 				character->enterVehicle(vehicle, seat);
-			}
-			else if( entryDoor && character->animator->getAnimationTime(AnimIndexAction) >= 0.5f )
-			{
-				vehicle->setPartTarget(entryDoor, true, entryDoor->openAngle);
-			}
-			else {
+			} else {
 				//character->setPosition(vehicle->getSeatEntryPosition(seat));
 				character->rotation = vehicle->getRotation();
 			}
+			if( entryDoor && character->animator->getAnimationTime(AnimIndexAction) >= 0.5f )	{
+				vehicle->setPartTarget(entryDoor, true, entryDoor->openAngle);
+			}
 		}
-		else if( character->animator->getAnimation(AnimIndexAction) == anm_enter ) {
+		else if(character->animator->getAnimation(AnimIndexAction) == anm_quickjack ||
+		        character->animator->getAnimation(AnimIndexAction) == anm_enter) {
 			if( character->animator->isCompleted(AnimIndexAction) ) {
 				// VehicleGetIn is over, finish activity
 				return true;
@@ -249,13 +262,31 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 		}
 	}
 	else {
-		glm::vec3 target = vehicle->getSeatEntryPosition(seat);
+
+		bool isDoorOpened = false; //(entryqDoor == nullptr || (entryDoor->constraint != nullptr && glm::abs(entryDoor->constraint->getHingeAngle()) >= 0.6f);
+		bool isLow = false;
+		auto occupant = static_cast<CharacterObject*>(vehicle->getOccupant(seat));
+
+		// This is the animation which decides where the player must stand
+		Animation* animation;
+		if (occupant != nullptr) {
+			animation = anm_quickjack;
+		} else {
+			animation = anm_enter;
+		}
+
+		auto pf = character->getRoot(animation, 0.0f).position;
+		auto pl = character->getRoot(animation, animation->duration).position;
+		auto vp = vehicle->getPosition();
+		auto vr = vehicle->getRotation();
+		auto sp = vehicle->info->seats[seat].offset;
+		glm::vec3 target = vp + vr * (sp + (pf - pl));
 		glm::vec3 targetDirection = target - character->getPosition();
 		targetDirection.z = 0.f;
 
 		float targetDistance = glm::length(targetDirection);
 
-		if( targetDistance <= 0.4f ) {
+		if( targetDistance <= 0.1f ) {
 			entering = true;
 			// Warp character to vehicle orientation
 			character->controller->setMoveDirection({0.f, 0.f, 0.f});
@@ -263,21 +294,21 @@ bool Activities::EnterVehicle::update(CharacterObject *character, CharacterContr
 			character->setHeading(
 						glm::degrees(glm::roll(vehicle->getRotation())));
 			
-			// Determine if the door open animation should be skipped.
-			if( entryDoor == nullptr || (entryDoor->constraint != nullptr && glm::abs(entryDoor->constraint->getHingeAngle()) >= 0.6f ) )
-			{
-				character->playActivityAnimation(anm_enter, false, true);
+			if (animation == anm_quickjack) {
+				occupant->controller->setNextActivity(new Activities::ExitVehicle(Activities::ExitVehicle::REASON_QUICK_JACKED));
+				character->playActivityAnimation(anm_quickjack, false, true);
 				character->enterVehicle(vehicle, seat);
+			} else if (animation == anm_enter) {
+				if (isDoorOpened) {
+					character->playActivityAnimation(anm_enter, false, true);
+					character->enterVehicle(vehicle, seat);
+				} else {
+					character->playActivityAnimation(anm_open, false, true);
+				}
 			}
-			else
-			{
-				character->playActivityAnimation(anm_open, false, true);
-			}
-		}
-		else if (targetDistance > kGiveUpDistance) {
+		} else if (targetDistance > kGiveUpDistance) {
 			return true;
-		}
-		else {
+		} else {
 			if( targetDistance > kSprintToEnterDistance ) {
 				character->controller->setRunning(true);
 			}
@@ -301,13 +332,29 @@ bool Activities::ExitVehicle::update(CharacterObject *character, CharacterContro
 	auto seat = character->getCurrentSeat();
 	auto door = vehicle->getSeatEntryDoor(seat);
 	
-	auto anm_exit = character->animations.car_getout_lhs;
-	
-	if( door->dummy->getDefaultTranslation().x > 0.f )
-	{
-		anm_exit = character->animations.car_getout_rhs;
-	}
+	bool rhs = door->dummy->getDefaultTranslation().x > 0.f;
 
+	Animation* anm_exit;
+	switch(reason) {
+	case REASON_LEAVING:
+		anm_exit = rhs ? character->animations.car_getout_rhs
+		               : character->animations.car_getout_lhs;
+		break;
+	case REASON_QUICK_JACKED:
+		anm_exit = character->animations.car_qjacked;
+		break;
+	case REASON_PULLED_OUT:
+//FIXME!
+#if 0
+		anm_exit = rhs ? character->animations.car_pullout_rhs
+		               : character->animations.car_pullout_lhs;
+#endif
+		break;
+	default:
+		RW_CHECK(false, "Unhandled case!");
+		break;
+	}
+	
 	if( vehicle->vehicle->type == VehicleData::BOAT ) {
 		auto ppos = character->getPosition();
 		character->enterVehicle(nullptr, seat);
@@ -327,12 +374,20 @@ bool Activities::ExitVehicle::update(CharacterObject *character, CharacterContro
 		}
 	}
 
-	if( character->animator->getAnimation(AnimIndexAction) == anm_exit ) {
+	const auto& animation = character->animator->getAnimation(AnimIndexAction);
+	if(animation == anm_exit) {
 		if( character->animator->isCompleted(AnimIndexAction) ) {
-			auto exitpos = vehicle->getSeatEntryPosition(seat);
+			auto sp = vehicle->info->seats[seat].offset;
+			auto vp = vehicle->getPosition();
+			auto vr = vehicle->getRotation();
 
 			character->enterVehicle(nullptr, seat);
-			character->setPosition(exitpos);
+
+			// Place the character where the animation wants him
+			auto pf = character->getRoot(animation, 0.0f).position;
+			auto pl = character->getRoot(animation, animation->duration).position;
+			auto exitPos = vp + vr * (sp + (pl - pf));
+			character->setPosition(exitPos);
 
 			if (isDriver)
 			{

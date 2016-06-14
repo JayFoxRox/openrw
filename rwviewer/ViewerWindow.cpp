@@ -132,7 +132,7 @@ void ViewerWindow::closeEvent(QCloseEvent* event)
 
 void ViewerWindow::openAnimations()
 {
-	QFileDialog dialog(this, "Open Animations", QDir::homePath(), "IFP Animations (*.ifp)");
+	QFileDialog dialog(this, "Open Animations", "/tmp/gta3/game/anim/ped.ifp", "IFP Animations (*.ifp)");
 	if(dialog.exec()) {
 		loadAnimations(dialog.selectedFiles()[0]);
 	}
@@ -142,7 +142,7 @@ void ViewerWindow::loadGame()
 {
 	QString dir = QFileDialog::getExistingDirectory(
 		this, tr("Open Directory"),
-		 QDir::homePath(),
+		 "/tmp/gta3/game/",
 		 QFileDialog::ShowDirsOnly
 		 | QFileDialog::DontResolveSymlinks);
 
@@ -164,8 +164,8 @@ void ViewerWindow::loadGame(const QString &path)
 
 		// Initalize all the archives.
 		gameWorld->data->loadIMG("/models/gta3");
-		gameWorld->data->loadIMG("/models/txd");
-		gameWorld->data->loadIMG("/anim/cuts");
+//		gameWorld->data->loadIMG("/models/txd");
+//		gameWorld->data->loadIMG("/anim/cuts");
 
 		loadedData(gameWorld);
 	}
