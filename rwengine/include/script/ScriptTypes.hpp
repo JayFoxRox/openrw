@@ -75,6 +75,16 @@ struct SCMOpcodeParameter {
 			return integer;
 		}
 	}
+
+	float realValue() const
+	{
+		if (type == TGlobal) {
+			return *globalReal;
+		} else {
+			return real;
+		}
+	}
+
 };
 
 typedef std::vector<SCMOpcodeParameter> SCMParams;
