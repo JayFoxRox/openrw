@@ -1,5 +1,7 @@
 # OpenRW
 
+[![AppVeyor CI Build Status](https://ci.appveyor.com/api/projects/status/nqinlqy9wnnxol51/branch/master?svg=true)](https://ci.appveyor.com/project/rwengine/openrw/branch/master)
+
 OpenRW is an open source re-implementation of Rockstar Games' Grand Theft Auto III,
 a classic 3D action game first published in 2001.
 
