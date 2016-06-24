@@ -52,16 +52,17 @@ void game_print_big(const ScriptArguments& args)
 					));
 }
 
-void game_print_now(const ScriptArguments& args)
+template <ScreenTextType type>
+void game_print_normal(const ScriptArguments& args)
 {
 	std::string id(args[0].string);
 	std::string str = args.getWorld()->data->texts.text(id);
 	int time = args[1].integer;
-	int flags = args[2].integer;
-	RW_UNUSED(flags);
-	RW_UNIMPLEMENTED("Unclear what style should be used");
-	args.getWorld()->state->text.addText<ScreenTextType::HighPriority>(
-				ScreenTextEntry::makeHighPriority(
+	unsigned unused = args[2].integerValue();
+	RW_UNUSED(unused);
+
+	args.getWorld()->state->text.addText<type>(
+				ScreenTextEntry::makeNormal(
 					id, str, time
 					));
 }
@@ -359,10 +360,11 @@ void game_print_big_with_number(const ScriptArguments& args)
 			ScreenText::format(
 				args.getWorld()->data->texts.text(id),
 				formatValue(args[1]));
+	int time = args[2].integer;
 	unsigned short style = args[3].integer;
 	args.getWorld()->state->text.addText<ScreenTextType::Big>(
 				ScreenTextEntry::makeBig(
-					id, str, style, 5000
+					id, str, style, time
 					));
 }
 
@@ -1151,8 +1153,9 @@ GameModule::GameModule()
 	bindUnimplemented( 0x00AE, game_set_driving_style, 2, "Set Driving Style" );
 	
 	bindFunction(0x00BA, game_print_big, 3, "Print big" );
-	bindFunction(0x00BC, game_print_now, 3, "Print Message Now" );
-	
+	bindFunction(0x00BB, game_print_normal<ScreenTextType::Normal>, 3, "Print Message" );
+	bindFunction(0x00BC, game_print_normal<ScreenTextType::NormalHighPriority>, 3, "Print Message Now" );
+	bindFunction(0x00BD, game_print_normal<ScreenTextType::NormalLowPriority>, 3, "Print Message Soon" );
 	bindFunction(0x00BE, game_clear_prints, 0, "Clear Message Prints" );
 	bindFunction(0x00BF, game_get_time, 2, "Get Time of Day" );
 	bindFunction(0x00C0, game_set_time, 2, "Set Time of Day" );
