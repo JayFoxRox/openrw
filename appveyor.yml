@@ -1,0 +1,28 @@
+# shallow clone
+clone_depth: 3
+
+os: Visual Studio 2015
+
+platform:
+  - x86
+  - x64
+
+configuration:
+  - Debug
+  - Release
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - mkdir build
+  - cd build
+  - cmake -G "Visual Studio 14 2015 Win64" -DBUILD_TESTS=1 -DTESTS_NODATA=1 ..
+  - cd ..
+
+build:
+  project: build/openrw.sln
+  parallel: true
+
+test_script:
+  - cd build && tests/run_tests && cd ..
