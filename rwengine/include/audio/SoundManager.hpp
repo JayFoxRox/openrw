@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef _MSC_VER
 #include <sndfile.h>
+#endif
 #include <AL/al.h>
 #include <AL/alc.h>
 
@@ -39,8 +41,10 @@ private:
 	public:
 		void loadFromFile(const std::string& filename);
 	private:
+#ifndef _MSC_VER
 		SF_INFO fileInfo;
 		SNDFILE* file;
+#endif
 		std::vector<uint16_t> data;
 	};
 

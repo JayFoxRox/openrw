@@ -48,6 +48,7 @@ bool SoundManager::initializeOpenAL()
 
 void SoundManager::SoundSource::loadFromFile(const std::string& filename)
 {
+#ifndef _MSC_VER
 	fileInfo.format = 0;
 	file = sf_open(filename.c_str(), SFM_READ, &fileInfo);
 
@@ -61,6 +62,7 @@ void SoundManager::SoundSource::loadFromFile(const std::string& filename)
 	} else {
 		std::cerr << "Error opening sound file \"" << filename << "\": " << sf_strerror(file) << std::endl;
 	}
+#endif
 }
 
 SoundManager::SoundBuffer::SoundBuffer()
@@ -79,10 +81,18 @@ bool SoundManager::SoundBuffer::bufferData(SoundSource& soundSource)
 {
 	alCheck(alBufferData(
 		buffer,
+#ifndef _MSC_VER
 		soundSource.fileInfo.channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
+#else
+    AL_FORMAT_MONO16
+#endif
 		&soundSource.data.front(),
 		soundSource.data.size() * sizeof(uint16_t),
+#ifndef _MSC_VER
 		soundSource.fileInfo.samplerate
+#else
+    44100
+#endif
 	));
 	alCheck(alSourcei(source, AL_BUFFER, buffer));
 
