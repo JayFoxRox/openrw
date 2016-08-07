@@ -15,6 +15,11 @@ install:
   - git submodule update --init --recursive
 
 before_build:
+  - Install-Package sdl2
+  - Install-Package glm
+  - Install-Package OpenAL-Soft
+  - Install-Package boost_test-vc140
+  - Install-Package boost_filesystem-vc140
   - mkdir build
   - cd build
   - cmake -G "Visual Studio 14 2015 Win64" -DBUILD_TESTS=1 -DTESTS_NODATA=1 ..
