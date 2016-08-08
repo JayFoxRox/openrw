@@ -100,8 +100,13 @@ IngameState::IngameState(RWGame* game, bool newgame, const std::string& save)
 
 void IngameState::startTest()
 {
+#if GAME == GAME_III
 	auto playerChar = getWorld()->createPlayer({270.f, -605.f, 40.f});
+#elif GAME == GAME_VC
+	auto playerChar = getWorld()->createPlayer({10.f, 100.f, 10.f});
+#endif
 
+  getWorld()->state->basic.gameHour = 12;
 	getWorld()->state->playerObject = playerChar->getGameObjectID();
 
 #if GAME == GAME_III
