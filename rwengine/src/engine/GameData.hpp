@@ -16,7 +16,6 @@ class Logger;
 #include <data/GameTexts.hpp>
 #include <data/ZoneData.hpp>
 
-#include <audio/MADStream.hpp>
 #include <gl/TextureData.hpp>
 #include <platform/FileIndex.hpp>
 

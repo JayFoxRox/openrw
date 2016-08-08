@@ -19,8 +19,6 @@ set(RWENGINE_SOURCES
 	src/ai/PlayerController.hpp
 	src/ai/TrafficDirector.cpp
 	src/ai/TrafficDirector.hpp
-	src/audio/MADStream.cpp
-	src/audio/MADStream.hpp
 	src/audio/SoundManager.cpp
 	src/audio/SoundManager.hpp
 	src/audio/alCheck.cpp
@@ -135,8 +133,16 @@ set(RWENGINE_SOURCES
 	src/script/modules/VMModule.hpp
 )
 
+if(NOT MSVC)
+	set(RWENGINE_SOURCES
+		${RWENGINE_SOURCES}
+		src/audio/MADStream.hpp
+		src/audio/MADStream.cpp
+	)
+endif()
+
 add_library(rwengine
-    ${RWENGINE_SOURCES}
+	${RWENGINE_SOURCES}
 )
 
 if(MINGW)
@@ -147,20 +153,35 @@ endif()
 
 target_link_libraries(rwengine
 	rwlib
-	${MAD_LIBRARY}
-	${LIBSNDFILE_LIBRARY}
 	${OPENAL_LIBRARY}
 	${OPENRW_PLATFORM_LIBS}
-	${SDL2_LIBRARY})
+	${SDL2_LIBRARY}
+	${Boost_LIBRARIES}
+)
+
+if(NOT MSVC)
+	target_link_libraries(rwengine
+		${MAD_LIBRARY}
+		${LIBSNDFILE_LIBRARY}
+	)
+endif()
 
 include_directories(SYSTEM
 	${BULLET_INCLUDE_DIR}
-	${MAD_INCLUDE_DIR}
-	${LIBSNDFILE_INCLUDE_DIR}
 	${OPENAL_INCLUDE_DIR}
+)
+include_directories(
+	"${Boost_INCLUDE_DIRS}"
+)
+
+if(NOT MSVC)
+	include_directories(SYSTEM
+		${MAD_INCLUDE_DIR}
+		${LIBSNDFILE_INCLUDE_DIR}
 	)
+endif()
 
 target_include_directories(
 	rwengine
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
-	)
+)
