@@ -102,7 +102,7 @@ bool LoaderIDE::load(const std::string &filename)
 			case CARS: {
 				std::shared_ptr<VehicleData> cars(new VehicleData);
 
-				std::string id, type, classType, frequency, lvl,
+				std::string id, type, anims, classType, frequency, lvl,
 				            comprules, wheelModelID, wheelScale;
 
 				getline(strstream, id, ',');
@@ -111,6 +111,9 @@ bool LoaderIDE::load(const std::string &filename)
 				getline(strstream, type, ',');
 				getline(strstream, cars->handlingID, ',');
 				getline(strstream, cars->gameName, ',');
+#if GAME == GAME_VC
+				getline(strstream, anims, ',');
+#endif
 				getline(strstream, classType, ',');
 				getline(strstream, frequency, ',');
 				getline(strstream, lvl, ',');
@@ -136,6 +139,8 @@ bool LoaderIDE::load(const std::string &filename)
 					cars->type = VehicleData::PLANE;
 				} else if (type == "heli") {
 					cars->type = VehicleData::HELI;
+				} else if (type == "bike") {
+					//FIXME
 				}
 
 				const std::map<VehicleData::VehicleClass, std::string> classTypes{
