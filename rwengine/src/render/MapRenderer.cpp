@@ -160,7 +160,6 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 		renderer->setUniform(rectProg, "model", model);
 		glBindTexture(GL_TEXTURE_2D, radarDisc->getName());
 		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 	}
 	
 	for(auto& blip : world->state->radarBlips)
