@@ -115,9 +115,15 @@ RWGame::RWGame(int argc, char* argv[])
 	renderer = new GameRenderer(&log, data);
 	
 	// Set up text renderer
+#if GAME == GAME_III
 	renderer->text.setFontTexture(0, "pager");
 	renderer->text.setFontTexture(1, "font1");
 	renderer->text.setFontTexture(2, "font2");
+#elif GAME == GAME_VC
+	renderer->text.setFontTexture(0, "");
+	renderer->text.setFontTexture(1, "font2");
+	renderer->text.setFontTexture(2, "font1");
+#endif
 
 	debug = new DebugDraw;
 	debug->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawConstraints | btIDebugDraw::DBG_DrawConstraintLimits);
