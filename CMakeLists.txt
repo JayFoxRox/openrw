@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.8)
 
 project(OpenRW)
 
+
+# This is a hack LUT
+add_definitions(-DGAME_III=1)
+add_definitions(-DGAME_VC=2)
+
+# This is a hack selection
+add_definitions(-DGAME=2)
+
 #
 # Options
 #
