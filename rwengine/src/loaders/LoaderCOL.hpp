@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <platform/FileHandle.hpp>
 #include <glm/glm.hpp>
 #include <data/CollisionModel.hpp>
 
@@ -18,6 +19,9 @@ public:
 	
 	/// Load the COL data from a file already in memory
 	bool load(char* data, const size_t size);
+	bool load(FileHandle file) {
+		return load(file->data, file->length);
+  }
 	
 	std::vector<std::unique_ptr<CollisionModel>> instances;
 };
