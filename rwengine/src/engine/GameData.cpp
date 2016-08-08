@@ -52,7 +52,11 @@ void GameData::load()
 	index.indexTree(datpath);
 	
 	parseDAT(datpath+"/data/default.dat");
+#if GAME == GAME_III
 	parseDAT(datpath+"/data/gta3.dat");
+#elif GAME == GAME_VC
+	parseDAT(datpath+"/data/gta_vc.dat");
+#endif
 	
 	loadDFF("wheels.dff");
 	loadDFF("weapons.dff");
