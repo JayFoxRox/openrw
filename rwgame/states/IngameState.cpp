@@ -104,6 +104,7 @@ void IngameState::startTest()
 
 	getWorld()->state->playerObject = playerChar->getGameObjectID();
 
+#if GAME == GAME_III
 	glm::vec3 itemspawn(276.5f, -609.f, 36.5f);
 	for (int i = 1; i < maxInventorySlots; ++i) {
 		auto item = getWorld()->getInventoryItem(i);
@@ -133,6 +134,7 @@ void IngameState::startTest()
 			sp += sr * glm::vec3( 2.f + v->info->handling.dimensions.x, 0.f, 0.f);
 		}
 	}
+#endif
 }
 
 void IngameState::startGame()
