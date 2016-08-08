@@ -1,5 +1,7 @@
 #include <loaders/LoaderGXT.hpp>
+#ifndef _MSC_VER
 #include <iconv.h>
+#endif
 
 void LoaderGXT::load(GameTexts &texts, FileHandle &file)
 {
@@ -16,7 +18,9 @@ void LoaderGXT::load(GameTexts &texts, FileHandle &file)
 	// This is not supported in GCC 4.8.1
 	//std::wstring_convert<std::codecvt<char16_t,char,std::mbstate_t>,char16_t> convert;
 
+#ifndef _MSC_VER
 	auto icv = iconv_open("UTF-8", "UTF-16");
+#endif
 
 	for( size_t t = 0; t < blocksize/12; ++t ) {
 		size_t offset = *(std::uint32_t*)(data+(t * 12 + 0));
@@ -35,12 +39,13 @@ void LoaderGXT::load(GameTexts &texts, FileHandle &file)
 
 		char* strbase = tdata+offset;
 
+#ifndef _MSC_VER
 #if defined(RW_NETBSD)
 		iconv(icv, (const char**)&strbase, &bytes, &uwot, &outSize);
 #else
 		iconv(icv, &strbase, &bytes, &uwot, &outSize);
 #endif
-
+#endif
 		u8buff[len] = '\0';
 
 		std::string message(u8buff);
@@ -48,5 +53,7 @@ void LoaderGXT::load(GameTexts &texts, FileHandle &file)
 		texts.addText(id, message);
 	}
 
+#ifndef _MSC_VER
 	iconv_close(icv);
+#endif
 }

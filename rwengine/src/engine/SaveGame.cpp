@@ -11,7 +11,9 @@
 #include <ai/PlayerController.hpp>
 #include <items/WeaponItem.hpp>
 #include <cstring>
+#ifndef _MSC_VER
 #include <iconv.h>
+#endif
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -536,6 +538,7 @@ bool SaveGame::loadGame(GameState& state, const std::string& file)
 	size_t outSize = 24;
 	char outBuff[48];
 	char* outCur = outBuff;
+#ifndef _MSC_VER
 	auto icv = iconv_open("UTF-8", "UTF-16");
 	char* saveName = (char*)state.basic.saveName;
 
@@ -545,6 +548,9 @@ bool SaveGame::loadGame(GameState& state, const std::string& file)
 	iconv(icv, &saveName, &bytes, &outCur, &outSize);
 #endif
 	strcpy(state.basic.saveName, outBuff);
+#else
+	strcpy(state.basic.saveName, "FIXME");
+#endif
 
 	BlockDword scriptBlockSize;
 
@@ -1251,6 +1257,7 @@ bool SaveGame::getSaveInfo(const std::string& file, BasicState *basicState)
 	size_t outSize = 24;
 	char outBuff[48];
 	char* outCur = outBuff;
+#ifndef _MSC_VER
 	auto icv = iconv_open("UTF-8", "UTF-16");
 	char* saveName = (char*)basicState->saveName;
 
@@ -1261,6 +1268,9 @@ bool SaveGame::getSaveInfo(const std::string& file, BasicState *basicState)
 	iconv(icv, &saveName, &bytes, &outCur, &outSize);
 #endif
 	strcpy(basicState->saveName, outBuff);
+#else
+	strcpy(basicState->saveName, "FIXME");
+#endif
 
 	return true;
 }
