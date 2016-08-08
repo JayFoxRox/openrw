@@ -150,8 +150,7 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 
 	if (mi.clipToSize) {
 		glDisable(GL_STENCIL_TEST);
-		// We only need the outer ring if we're clipping.
-		glBlendFuncSeparate(GL_DST_COLOR, GL_ZERO, GL_ONE, GL_ZERO);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 		TextureData::Handle radarDisc = data->findTexture("radardisc");
 
 		glm::mat4 model;
