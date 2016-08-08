@@ -221,6 +221,7 @@ Menu* DebugState::createVehicleMenu()
 	}, kDebugEntryHeight));
 
 	const std::map<std::string, int> kVehicleTypes = {
+#if GAME == GAME_III
 	    {"Landstalker", 90},
 	    {"Taxi", 110},
 	    {"Firetruck", 97},
@@ -235,6 +236,27 @@ Menu* DebugState::createVehicleMenu()
 	    {"Dodo", 126},
 	    {"Speeder", 142},
 	    {"Yakuza", 136},
+#elif GAME == GAME_VC
+			{"Infernus",141},
+			{"Voodoo",142},
+			{"Pony",143},
+			{"Ambulance",146},
+			{"BF Injection",154},
+			{"Hunter",155},
+			{"Rhino",162},
+			{"Barracks",163},
+			{"Cuban",164},
+			{"Angel",166},
+			{"Cabbie",168},
+			{"Caddy",187},
+			{"Skimmer",190},
+			{"PCJ600",191},
+			{"Faggio",192},
+			{"Sanchez",198},
+			{"VCN Maverick",218},
+			{"Jetmax",223},
+			{"Police Cheetah",236},
+#endif
 	};
 
 	for (auto& e : kVehicleTypes) {
