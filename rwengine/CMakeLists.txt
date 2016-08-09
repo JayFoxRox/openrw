@@ -2,6 +2,8 @@
 ##      RWENGINE
 ###########################################################
 
+find_package(Boost COMPONENTS filesystem REQUIRED)
+
 set(RWENGINE_SOURCES
 	src/BinaryStream.cpp
 	src/BinaryStream.hpp

@@ -37,10 +37,15 @@ add_executable(rwgame
 include_directories(SYSTEM
 	${BULLET_INCLUDE_DIR}
 	${OPENAL_INCLUDE_DIR}
+  ${SDL2_INCLUDE_DIR}
 	)
 include_directories(
 	"${CMAKE_SOURCE_DIR}/rwgame"
-	)
+	"${Boost_INCLUDE_DIRS}"
+)
+include_directories(
+	"${CMAKE_SOURCE_DIR}/rwengine/include"
+)
 
 target_link_libraries(rwgame
 	rwengine
