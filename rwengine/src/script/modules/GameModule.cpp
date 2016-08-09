@@ -444,7 +444,11 @@ void game_create_garage(const ScriptArguments& args)
 	});
 	int garageIndex = args.getWorld()->state->garages.size() - 1;
 	
+#if GAME == GAME_III
 	*args[7].globalInteger = garageIndex;
+#elif GAME == GAME_VC
+	*args[9].globalInteger = garageIndex;
+#endif
 }
 
 bool game_is_car_inside_garage(const ScriptArguments& args)
@@ -1022,7 +1026,12 @@ bool game_collision_loaded(const ScriptArguments& args)
 
 void game_load_audio(const ScriptArguments& args)
 {
+#if GAME == GAME_III
 	std::string name = args[0].string;
+#elif GAME == GAME_VC
+	auto index = args[0].integerValue();
+	std::string name = args[1].string;
+#endif
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
 	if ( ! args.getWorld()->data->loadAudioClip(name, name + ".wav")) {
@@ -1034,12 +1043,18 @@ void game_load_audio(const ScriptArguments& args)
 
 bool game_is_audio_loaded(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	return world->sound.isLoaded(world->missionAudio);
 }
 
 void game_play_mission_audio(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	if (world->missionAudio.length() > 0) {
 		world->sound.playSound(world->missionAudio);
@@ -1047,11 +1062,16 @@ void game_play_mission_audio(const ScriptArguments& args)
 }
 bool game_is_audio_finished(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	bool isFinished = ! world->sound.isPlaying(world->missionAudio);
 
 	if (isFinished) {
+#if GAME != GAME_VC
 		world->missionAudio = "";
+#endif
 	}
 
 	return isFinished;
@@ -1277,14 +1297,22 @@ GameModule::GameModule()
 	bindUnimplemented( 0x014F, game_stop_timer, 1, "Stop Timer" );
 	
 	bindUnimplemented( 0x0151, game_clear_counter, 1, "Clear Counter" );
-	bindFunction(0x0152, game_set_zone_car_info, 17, "Set zone car info" );
+#if GAME == GAME_III
+	bindFunction(0x0152, game_set_zone_car_info, 11, "Set zone car info" );
+#elif GAME == GAME_VC
+	bindUnimplemented(0x0152, game_set_zone_car_info, 13, "Set zone car info" );
+#endif
 	
 	bindUnimplemented( 0x0158, game_camera_follow_vehicle, 3, "Camera Follow Vehicle" );
 	bindFunction(0x0159, game_camera_follow_character, 3, "Camera Follow Character" );
 	
 	bindFunction(0x015A, game_reset_camera, 0, "Reset Camera" );
 	
+#if GAME == GAME_III
 	bindFunction(0x015C, game_set_zone_ped_info, 11, "Set zone ped info" );
+#elif GAME == GAME_VC
+	bindUnimplemented(0x015C, game_set_zone_ped_info, 13, "Set zone ped info" );
+#endif
     bindUnimplemented( 0x015D, game_set_timescale;, 1, "Set Game Timescale" );
 
 	bindFunction(0x015F, game_camera_fixed_position, 6, "Set Fixed Camera Position" );
@@ -1342,7 +1370,11 @@ GameModule::GameModule()
 	
 	bindUnimplemented( 0x01F9, game_start_kill_frenzy, 9, "Start Kill Frenzy" );
 
+#if GAME == GAME_III
 	bindFunction(0x0219, game_create_garage, 8, "Create Garage" );
+#elif GAME == GAME_VC
+	bindFunction(0x0219, game_create_garage, 10, "Create Garage" );
+#endif
 
 	bindUnimplemented( 0x021B, game_set_target_car_for_mission_garage, 2, "Set Target Car for Mission Garage" );
 	bindFunction(0x021C, game_is_car_inside_garage, 1, "Is Car Inside Garage" );
@@ -1477,11 +1509,17 @@ GameModule::GameModule()
 	
 	bindUnimplemented( 0x03CB, game_load_area, 3, "Load Area Near" );
 	
+#if GAME == GAME_III
 	bindFunction(0x03CF, game_load_audio, 1, "Load Audio" );
-	
 	bindFunction(0x03D0, game_is_audio_loaded, 0, "Is Audio Loaded" );
 	bindFunction(0x03D1, game_play_mission_audio, 0, "Play Mission Audio" );
 	bindFunction(0x03D2, game_is_audio_finished, 0, "Is Mission Audio Finished" );
+#elif GAME == GAME_VC
+	bindFunction(0x03CF, game_load_audio, 2, "Load Audio" );
+	bindFunction(0x03D0, game_is_audio_loaded, 1, "Is Audio Loaded" );
+	bindFunction(0x03D1, game_play_mission_audio, 1, "Play Mission Audio" );
+	bindFunction(0x03D2, game_is_audio_finished, 1, "Is Mission Audio Finished" );
+#endif
 	
 	bindFunction(0x03D4, game_import_garage_contains_needed_car, 2, "Import Garage Contains Needed Car" );
 	bindFunction(0x03D5, game_clear_print, 1, "Clear This Print" );
