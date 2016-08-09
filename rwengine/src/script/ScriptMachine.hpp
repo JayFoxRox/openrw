@@ -94,9 +94,15 @@ struct UnimplementedOpcode : SCMException
 			case TInt32:
 				ss << p.integer;
 				break;
+#if GAME == GAME_III
 			case TFloat16:
 				ss << p.real;
 				break;
+#elif GAME == GAME_VC
+			case TFloat32:
+				ss << p.real;
+				break;
+#endif
 			case TGlobal:
 				ss << "Global: " << p.globalPtr;
 				break;

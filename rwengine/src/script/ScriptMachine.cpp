@@ -117,10 +117,19 @@ void ScriptMachine::executeThread(SCMThread &t, int msPassed)
 						  parameters.back().string);
                 pc += sizeof(SCMByte) * 8;
 				break;
+#if GAME == GAME_III
 			case TFloat16:
                 parameters.back().real = _file->read<std::int16_t>(pc) / 16.f;
                 pc += sizeof(SCMByte) * 2;
 				break;
+#elif GAME == GAME_VC
+			case TFloat32: {
+					  auto v = _file->read<std::uint32_t>(pc);
+					  parameters.back().real = *reinterpret_cast<float*>(&v);
+            pc += sizeof(SCMByte) * 4;
+          }
+				break;
+#endif
 			default:
                 throw UnknownType(type, pc, t.name);
 				break;

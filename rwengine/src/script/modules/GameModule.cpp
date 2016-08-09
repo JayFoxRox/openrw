@@ -32,8 +32,13 @@
 std::string formatValue(const SCMOpcodeParameter& p)
 {
 	switch (p.type) {
+#if GAME == GAME_III
 	case TFloat16:
 		return std::to_string(p.real);
+#elif GAME == GAME_VC
+	case TFloat32:
+		return std::to_string(p.real);
+#endif
 	default:
 		return std::to_string(p.integerValue());
 	}
