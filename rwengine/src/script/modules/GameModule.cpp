@@ -590,6 +590,7 @@ void game_set_widescreen(const ScriptArguments& args)
 	args.getWorld()->state->isCinematic = !!args[0].integer;
 }
 
+#if GAME == GAME_III
 static const char* sprite_names[] = {
 	"", // 0
 	"radar_asuka",
@@ -613,6 +614,50 @@ static const char* sprite_names[] = {
 	"radar_tony",
 	"radar_weapon",
 };
+#elif GAME == GAME_VC
+static const char* sprite_names[] = {
+	"", // 0
+  "radar_centre",
+  "arrow",
+  "radar_north",
+  "radar_avery",
+  "radar_biker",
+  "radar_cortez",
+  "radar_diaz",
+  "radar_kent",
+  "radar_lawyer",
+  "radar_phil",
+  "bikers",
+  "boatyard",
+  "club",
+  "cubans",
+  "filmstudio",
+  "gun",
+  "haitians",
+  "hardware",
+  "radar_save",
+  "radar_strip",
+  "icecream",
+  "kcabs",
+  "lovefist",
+  "printworks",
+  "", // 25
+  "SunYard",
+  "spray",
+  "tshirt",
+  "tommy",
+  "phone",
+  "RWildstyle",
+  "RFlash",
+  "RKchat",
+  "RFever",
+  "RVRock",
+  "RVCPR",
+  "REspantoso",
+  "REmotion",
+  "RWave",
+};
+#endif
 
 void game_add_contact_blip(const ScriptArguments& args)
 {
