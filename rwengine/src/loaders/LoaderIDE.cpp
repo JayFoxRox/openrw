@@ -41,6 +41,10 @@ bool LoaderIDE::load(const std::string &filename)
 				section = TWODFX;
 			} else if (line == "path") {
 				section = PATH;
+#if GAME == GAME_VC
+			} else if (line == "weap") {
+				section = WEAP;
+#endif
 			}
 		} else {
 			// Remove ALL the whitespace!!
@@ -276,6 +280,46 @@ bool LoaderIDE::load(const std::string &filename)
 				objects.insert({cut->ID, cut});
 				break;
 			}
+			case WEAP: {
+				std::shared_ptr<ObjectData> objs(new ObjectData);
+
+				std::string id, numClumps, flags,
+				            modelName, textureName, animationName;
+				
+				// Read the content of the line
+				getline(strstream, id, ',');
+				getline(strstream, modelName, ',');
+				getline(strstream, textureName, ',');
+				getline(strstream, animationName, ','); //FIXME: Unused
+				getline(strstream, numClumps, ',');
+
+				objs->numClumps = atoi(numClumps.c_str());
+				for (size_t i = 0; i < objs->numClumps; i++) {
+					std::string drawDistance;
+					getline(strstream, drawDistance, ',');
+					objs->drawDistance[i] = atoi(drawDistance.c_str());
+				}
+
+				getline(strstream, flags, ',');
+				
+				objs->timeOff = objs->timeOn = 0;
+
+				// Put stuff in our struct
+				objs->ID          = atoi(id.c_str());
+				objs->flags       = atoi(flags.c_str());
+				objs->modelName   = modelName;
+				objs->textureName = textureName;
+				objs->LOD         = false;
+
+        //FIXME: What is this?
+				if(modelName.find("LOD", 0,3) != modelName.npos
+						&& modelName != "LODistancoast01") {
+					objs->LOD = true;
+				}
+
+				objects.insert({objs->ID, objs});
+        break;
+      }
 			}
 		}
 
