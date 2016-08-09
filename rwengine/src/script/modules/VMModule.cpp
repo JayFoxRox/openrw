@@ -86,6 +86,11 @@ void vm_global_float_gt_float(const ScriptArguments& args)
 	args.getThread()->conditionResult =  *args[0].globalReal > args[1].real;
 }
 
+void vm_float_gt_global_int(const ScriptArguments& args)
+{
+	args.getThread()->conditionResult =  args[0].real > *args[1].globalInteger;
+}
+
 void vm_global_int_ge_int(const ScriptArguments& args)
 {
 	args.getThread()->conditionResult =  *args[0].globalInteger >= args[1].integer;
@@ -270,6 +275,8 @@ VMModule::VMModule()
 	
 	bindFunction(0x01F, vm_global_int_gt_global_int, 2, "Local Int Greater than Global Int");
 	bindFunction(0x020, vm_global_float_gt_float, 2, "Global Float Greather than Float");
+
+  bindFunction(0x022, vm_float_gt_global_int, 2, "Float Greather than Global Int");
 	
 	bindFunction(0x028, vm_global_int_ge_int, 2, "Global Int >= Int");
 	bindFunction(0x029, vm_global_int_ge_int, 2, "Local Int >= Int");
