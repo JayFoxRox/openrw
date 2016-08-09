@@ -1356,6 +1356,7 @@ ObjectModule::ObjectModule()
 : ScriptModule("Object")
 {
 	bindFunction(0x0053, game_create_player, 5, "Create Player" );
+	bindUnimplemented( 0x0054, game_todo, 4, "" );
 	
     bindFunction(0x0055, game_set_object_position<PlayerController>, 4, "Set Player Position" );
 	bindFunction(0x0056, game_player_in_area_2d, 6, "Is Player In Area 2D" );
@@ -1373,6 +1374,7 @@ ObjectModule::ObjectModule()
 	bindFunction(0x00A5, game_create_vehicle, 5, "Create Vehicle" );
 	bindFunction(0x00A6, game_destroy_object<VehicleObject>, 1, "Destroy Vehicle" );
 	
+	bindUnimplemented( 0x00A9, game_todo, 1, "" );
 	bindFunction(0x00AA, game_get_vehicle_position, 4, "Get Vehicle Position" );
 
 	bindUnimplemented( 0x00AF, game_set_vehicle_objective, 2, "Set Vehicle Objective" );
@@ -1412,6 +1414,7 @@ ObjectModule::ObjectModule()
 
 	bindFunction(0x0100, game_character_near_point_in_vehicle, 8, "Is Character near point in car" );
 	
+	bindFunction(0x0107, game_create_object_world, 5, "Create Object with offset" );
 	bindFunction(0x0108, game_destroy_object<InstanceObject>, 1, "Destroy Object" );
 	
 	bindFunction(0x0118, game_character_dead, 1, "Is Character Dead" );
@@ -1456,6 +1459,8 @@ ObjectModule::ObjectModule()
 	bindFunction(0x01AC, game_vehicle_stopped_in_volume, 8, "Is Vehicle Stopped in volume" );
 	bindFunction(0x01AD, game_locate_vehicle_near_point_2D, 6, "Locate Vehicle Near Point 2D" );
 
+	bindUnimplemented( 0x01AF, game_todo, 8, "" );
+
 	bindFunction(0x01B2, game_give_weapon_to_character, 3, "Give Weapon to Character" );
 
 	bindUnimplemented( 0x01BB, game_object_coordinates, 4, "Get Object Coordinates" );
@@ -1479,6 +1484,8 @@ ObjectModule::ObjectModule()
 	
 	bindFunction(0x01F3, game_vehicle_in_air, 1, "Is Vehicle In Air" );
 	bindFunction(0x01F4, game_vehicle_flipped, 1, "Is Car Flipped" );
+
+	bindUnimplemented( 0x01FA, game_todo, 1, "" );
 	
 	bindFunction(0x0204, game_character_near_car_2d, 5, "Is Char near Car in Car 2D" );
 	
@@ -1496,8 +1503,12 @@ ObjectModule::ObjectModule()
 	bindFunction(0x0227, game_get_vehicle_health, 2, "Get Vehicle Health" );
 	
 	bindFunction(0x0229, game_set_vehicle_colours, 3, "Set Vehicle Colours" );
+
+	bindUnimplemented( 0x0235, game_unknown, 3, "" );
 	
 	bindFunction(0x0239, game_character_run_to, 3, "Character Run to" );
+
+	bindUnimplemented( 0x0241, game_todo, 1, "" ); // Cond
 
 	bindUnimplemented( 0x0243, game_set_character_personality, 2, "Set Character Personality" );
 	
@@ -1509,11 +1520,15 @@ ObjectModule::ObjectModule()
 	bindFunction(0x029F, game_is_character_stopped<PlayerController>, 1, "Is Player Stopped" );
 
 	bindUnimplemented( 0x02AA, game_set_car_only_damageable_by_player, 2, "Set Car Only Damageable by Player" );
+	bindUnimplemented( 0x02AB, game_todo, 6, "" );
+	bindUnimplemented( 0x02AC, game_todo, 6, "" );
 	
 	bindFunction(0x02B3, game_character_in_area_9<PlayerController>, 9, "Is Player In Area" );
 
 	bindFunction(0x02BF, game_is_vehicle_in_water, 1, "Is Vehicle in Water" );
 	
+	bindUnimplemented( 0x02CE, game_todo, 4, "" );
+
 	bindFunction(0x02DD, game_get_random_character_in_zone, 2, "Get Random Character In Zone");
 	bindFunction(0x02DE, game_player_in_taxi, 1, "Is Player In Taxi" );
 	
@@ -1529,9 +1544,12 @@ ObjectModule::ObjectModule()
 	bindFunction( 0x034D, game_rotate_object, 4, "Rotate Object" );
 	bindUnimplemented( 0x034E, game_slide_object, 8, "Slide Object" );
 	bindFunction(0x034F, game_destroy_object_with_fade<CharacterObject>, 1, "Destroy Character with Fade" );
-	
+
+	bindUnimplemented( 0x0350, game_todo, 2, "" );
+
 	bindUnimplemented( 0x035D, game_set_object_targetable, 1, "Set Object Targetable" );
-	
+
+	bindUnimplemented(0x0362, game_todo, 4, ""); // <<<<< Warp car (from INTRO)
 	bindFunction(0x0363, game_set_close_object_visible, 6, "Set Closest Object Visibility");
 
 	bindUnimplemented( 0x0365, game_set_character_objective_to_hail_taxi, 1, "Set Character Objective to Hail Taxi" );
@@ -1556,4 +1574,19 @@ ObjectModule::ObjectModule()
 	bindFunction(0x0442, game_character_in_vehicle<PlayerController>, 2, "Is Player in This Vehicle" );
   bindFunction(0x0443, game_player_in_any_vehicle, 1, "Is Player In Any Vehicle" ); /// Duplicate of 00E0?!
 	bindFunction(0x0448, game_character_in_vehicle<CharacterObject>, 2, "Is Character in This Vehicle" );
+
+	bindUnimplemented( 0x0453, game_unknown, 4, "" );
+	bindUnimplemented( 0x0484, game_unknown, 2, "" );// returns crap
+	bindUnimplemented( 0x04AE, game_unknown, 2, "" );
+	bindUnimplemented( 0x04BA, game_unknown, 2, "" );
+	bindUnimplemented( 0x04E4, game_request_collision, 2, "Request Collision" );
+	bindUnimplemented( 0x04F9, game_unknown, 2, "" );
+	bindUnimplemented( 0x0500, game_unknown, 2, "" );
+	bindUnimplemented( 0x0517, game_unknown, 5, "" ); // returns crap
+	bindUnimplemented( 0x0518, game_unknown, 6, "" ); // returns crap
+	bindUnimplemented( 0x056A, game_unknown, 0, "" ); // Cond <<<<<<<<<<<<<<< has cutscene finished
+	bindUnimplemented( 0x0570, game_unknown, 5, "" ); // returns crap
+	bindUnimplemented( 0x0583, game_unknown, 2, "" ); // Cond <<<<<<<<<<<<<<< is player in info zone?
+
+
 }

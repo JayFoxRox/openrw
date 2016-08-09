@@ -1334,6 +1334,7 @@ GameModule::GameModule()
 	bindFunction(0x0186, game_add_object_blip<VehicleObject>, 2, "Add Blip for Vehicle");
 	bindFunction(0x0187, game_add_object_blip<CharacterObject>, 2, "Add Blip for Character");
 
+	bindUnimplemented( 0x0189, game_todo, 4, "" ); // Returns crap
 	bindFunction(0x018A, game_add_location_blip, 4, "Add Blip for Coord");
 	bindFunction(0x018B, game_change_blip_mode, 2, "Change Blip Display Mode");
 	bindUnimplemented( 0x018C, game_play_sound_at, 4, "Play Sound At" );
@@ -1419,6 +1420,8 @@ GameModule::GameModule()
 	bindFunction(0x02A7, game_add_contact_blip, 5, "Add Contact Blip");
 	bindFunction(0x02A8, game_add_sprite_blip, 5, "Add Sprite Blip");
 	
+	bindUnimplemented( 0x02D7, game_todo, 2, "" ); // Cond
+
 	bindFunction(0x02E4, game_load_cutscene, 1, "Load Cutscene Data" );
 	bindFunction(0x02E5, game_create_cutscene_object, 2, "Create Cutscene Object" );
 	bindFunction(0x02E6, game_set_cutscene_anim, 2, "Set Cutscene Animation" );
@@ -1477,7 +1480,11 @@ GameModule::GameModule()
 	bindUnimplemented( 0x0373, game_camera_behind_player, 0, "Set Camera Behind Player" );
 	bindUnimplemented( 0x0374, game_set_motion_blur, 1, "Set Motion Blur" );
 
+	bindUnimplemented( 0x0382, game_todo, 2, "" );
+
 	bindUnimplemented( 0x038B, game_load_models_now, 0, "Load Requested Models Now" );
+
+	bindUnimplemented( 0x0392, game_todo, 2, "" );
 	
 	bindFunction(0x0394, game_play_music_id, 1, "Play music");
 	bindFunction(0x0395, game_clear_area, 5, "Clear Area Vehicles and Pedestrians" );
@@ -1576,4 +1583,37 @@ GameModule::GameModule()
 	bindFunction(0x044D, game_load_splash, 1, "Load Splash Screen" );
 	
 	bindUnimplemented( 0x0452, game_enable_user_camera, 0, "Enable User Camera Controll" );
+
+	bindUnimplemented( 0x047E, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x049C, game_todo, 3, "" ); // Returns crap
+	bindUnimplemented( 0x049D, game_todo, 2, "" );
+	bindUnimplemented( 0x049E, game_todo, 2, "" );
+	bindUnimplemented( 0x049F, game_todo, 2, "" );
+	bindUnimplemented( 0x04A8, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AA, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AC, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AD, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04BB, game_todo, 1, "" );
+	bindUnimplemented( 0x04C9, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04CE, game_todo, 5, "" ); // Returns crap
+	bindUnimplemented( 0x04EC, game_todo, 13, "" );
+	bindUnimplemented( 0x04F8, game_todo, 13, "" );
+	bindUnimplemented( 0x04FA, game_todo, 1, "" );
+	bindUnimplemented( 0x04FC, game_todo, 7, "" );
+	bindUnimplemented( 0x054C, game_todo, 1, "" );
+	bindUnimplemented( 0x055B, game_todo, 5, "" ); // Returns crap
+	bindUnimplemented( 0x0566, game_todo, 2, "" );
+	bindUnimplemented( 0x056C, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x0578, game_todo, 1, "" );
+	bindUnimplemented( 0x0579, game_todo, 1, "" );
+	bindUnimplemented( 0x057A, game_todo, 2, "" );
+	bindUnimplemented( 0x057B, game_todo, 0, "" );
+	bindUnimplemented( 0x057C, game_todo, 1, "" );
+	bindUnimplemented( 0x057D, game_todo, 1, "" );
+	bindUnimplemented( 0x057E, game_todo, 1, "" );
+	bindUnimplemented( 0x0581, game_todo, 1, "" );
+	bindUnimplemented( 0x058C, game_todo, 1, "" );
+	bindUnimplemented( 0x058D, game_todo, 4, "" );
+	bindUnimplemented( 0x0592, game_todo, 2, "" );
+	bindUnimplemented( 0x0596, game_todo, 1, "" ); // Cond
 }
