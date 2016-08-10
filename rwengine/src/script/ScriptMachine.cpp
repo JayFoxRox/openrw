@@ -146,7 +146,7 @@ void ScriptMachine::executeThread(SCMThread &t, int msPassed)
         }
 
 #if RW_SCRIPT_DEBUG
-		if (strcmp(t.name, "EIGHT") == 0)
+//		if (strcmp(t.name, "EIGHT") == 0)
 		{
 			printf("% 8s  %04x %04x % 25s", t.name, t.programCounter, opcode, code.signature.c_str());
 			for (auto& a : sca.getParameters())
