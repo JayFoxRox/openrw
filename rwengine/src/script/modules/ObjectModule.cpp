@@ -79,16 +79,16 @@ bool game_player_in_area_2d(const ScriptArguments& args)
 
 bool game_player_in_area_3d(const ScriptArguments& args)
 {
-    auto character = args.getPlayerCharacter(0);
+	auto character = args.getPlayerCharacter(0);
 	glm::vec3 min(args[1].real, args[2].real, args[3].real);
 	glm::vec3 max(args[4].real, args[5].real, args[6].real);
 	auto player = character->getPosition();
-	if( player.x > min.x &&
-		player.y > min.y &&
-		player.z > min.z &&
-		player.x < max.x &&
-		player.y < max.y &&
-		player.z < max.z) {
+	if( player.x > std::min(min.x, max.x) &&
+	    player.y > std::min(min.y, max.y) &&
+	    player.z > std::min(min.z, max.z) &&
+	    player.x < std::max(min.x, max.x) &&
+	    player.y < std::max(min.y, max.y) &&
+	    player.z < std::max(min.z, max.z)) {
 		return true;
 	}
 	return false;
