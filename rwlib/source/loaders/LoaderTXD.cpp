@@ -92,10 +92,42 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 		coldata += 8;
 
     if(isDxt) {
-      assert(false); // This should never happen, only the formats above are known.
-          std::cerr << "DXT not supported." << std::endl;
-      return getErrorTexture();
-	  }
+      GLenum internalFormat;
+      switch(rasterformat)
+		  {
+		  case RW::BSTextureNative::FORMAT_1555:
+        internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+			  break;
+		  case RW::BSTextureNative::FORMAT_565:
+        internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			  break;
+		  case RW::BSTextureNative::FORMAT_4444:
+        internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+			  break;
+		  default:
+        assert(false); // This should never happen, only the formats above are known.
+        return getErrorTexture();
+		  }
+
+      // Complain if the s3tc-extension is not available
+      if(!ogl_ext_EXT_texture_compression_s3tc) {
+        static bool warned = false;
+        if (!warned) {
+          std::cerr << "Your graphics driver doesn't support EXT_texture_compression_s3tc. Some textures will not load correctly." << std::endl;
+          warned = true;
+        }
+        debugLabel += "no-s3tc-extension;";
+        return getErrorTexture(debugLabel);
+      }
+
+		  glGenTextures(1, &textureName);
+		  glBindTexture(GL_TEXTURE_2D, textureName);
+		  glCompressedTexImage2D(
+			  GL_TEXTURE_2D, 0, internalFormat,
+			  texNative.width, texNative.height, 0,
+			  texNative.datasize, coldata
+		  );
+    }
     else
     {
 	    GLenum type = GL_UNSIGNED_BYTE, format = GL_RGBA;
