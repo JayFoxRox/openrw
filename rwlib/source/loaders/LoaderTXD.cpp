@@ -175,12 +175,20 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
     return GL_REPEAT;
   };
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glTexFilter(texNative.filterflags));
+	bool useMipMaps = false;
+  if (generateMipMaps) {
+	  glGenerateMipmap(GL_TEXTURE_2D);
+		useMipMaps = true;
+	} else if (hasMipMaps) {
+		// @todo Load mipmaps from file instead
+	  glGenerateMipmap(GL_TEXTURE_2D);
+		useMipMaps = true;
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glTexFilter(texNative.filterflags, useMipMaps));
+
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode(texNative.wrapU));
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode(texNative.wrapV));
-
-	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return TextureData::create( textureName, { texNative.width, texNative.height }, transparent );
 }
