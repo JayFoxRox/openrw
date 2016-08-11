@@ -135,48 +135,50 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
     }
   }
 
-	GLenum texFilter = GL_LINEAR;
-	switch(texNative.filterflags & 0xFF) {
-	default:
-	case RW::BSTextureNative::FILTER_LINEAR:
-		texFilter = GL_LINEAR;
-		break;
-	case RW::BSTextureNative::FILTER_NEAREST:
-		texFilter = GL_NEAREST;
-		break;
-	}
+  auto glTexFilter = [](uint8_t filter, bool mipmap) -> GLenum {
+    switch(filter) {
+    case RW::BSTextureNative::FILTER_NEAREST:
+      return GL_NEAREST;
+    case RW::BSTextureNative::FILTER_LINEAR:
+      return GL_LINEAR;
+    case RW::BSTextureNative::FILTER_MIP_NEAREST:
+			// @todo Verify
+      return mipmap ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
+    case RW::BSTextureNative::FILTER_MIP_LINEAR:
+			// @todo Verify
+      return mipmap ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
+    case RW::BSTextureNative::FILTER_LINEAR_MIP_NEAREST:
+      return mipmap ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR;
+    case RW::BSTextureNative::FILTER_LINEAR_MIP_LINEAR:
+      return mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+    case RW::BSTextureNative::FILTER_NONE: // @todo Check what this is
+    default:
+      assert(false);
+      break;
+    }
+    return GL_LINEAR;
+  };
+
+  auto glWrapMode = [](uint8_t mode) -> GLenum {
+    switch(mode) {
+    case RW::BSTextureNative::WRAP_WRAP:
+      return GL_REPEAT;
+    case RW::BSTextureNative::WRAP_CLAMP:
+      return GL_CLAMP_TO_EDGE;
+    case RW::BSTextureNative::WRAP_MIRROR:
+      return GL_MIRRORED_REPEAT;
+    case RW::BSTextureNative::WRAP_NONE: // @todo Check what this is
+    default:
+      assert(false);
+      break;
+    }
+    return GL_REPEAT;
+  };
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFilter);
-
-	GLenum texwrap = GL_REPEAT;
-	switch(texNative.wrapU) {
-	default:
-	case RW::BSTextureNative::WRAP_WRAP:
-		texwrap = GL_REPEAT;
-		break;
-	case RW::BSTextureNative::WRAP_CLAMP:
-		texwrap = GL_CLAMP_TO_EDGE;
-		break;
-	case RW::BSTextureNative::WRAP_MIRROR:
-		texwrap = GL_MIRRORED_REPEAT;
-		break;
-	}
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texwrap );
-
-	switch(texNative.wrapV) {
-	default:
-	case RW::BSTextureNative::WRAP_WRAP:
-		texwrap = GL_REPEAT;
-		break;
-	case RW::BSTextureNative::WRAP_CLAMP:
-		texwrap = GL_CLAMP_TO_EDGE;
-		break;
-	case RW::BSTextureNative::WRAP_MIRROR:
-		texwrap = GL_MIRRORED_REPEAT;
-		break;
-	}
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texwrap );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glTexFilter(texNative.filterflags));
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode(texNative.wrapU));
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode(texNative.wrapV));
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 

@@ -247,6 +247,7 @@ namespace RW
 	
 	struct BSTextureNative
 	{
+    // @todo Use enum types for those defined below
 		uint32_t platform;
 		uint16_t filterflags;
 		uint8_t wrapV;
