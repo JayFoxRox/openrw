@@ -7,7 +7,7 @@ static constexpr uint32_t gErrorTextureData[] = {
 	0xFFFF00FF, 0xFF0000FF, 0xFFFF00FF, 0xFF0000FF,
 };
 
-TextureData::Handle getErrorTexture()
+TextureData::Handle getErrorTexture(std::string debugLabel)
 {
 	static GLuint errTexName = 0;
 	static TextureData::Handle tex;
@@ -27,6 +27,8 @@ TextureData::Handle getErrorTexture()
 
  		tex = TextureData::create(errTexName, {4, 4}, false);
   }
+
+  glObjectLabel(GL_TEXTURE, errTexName, -1, (debugLabel != "" ? debugLabel.c_str() : NULL));
 
   return tex;
 }
