@@ -57,6 +57,7 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 	bool isPal4 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL4); //FIXME!
 	bool isPal8 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL8) == RW::BSTextureNative::FORMAT_EXT_PAL8;
 
+  bool hasMipMaps = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_MIPMAP); //FIXME!
   bool generateMipMaps = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_MIPMAP); //FIXME!
 
 	// Export this value
