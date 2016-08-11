@@ -23,12 +23,10 @@ class ObjectRenderer
 public:
 	ObjectRenderer(GameWorld* world,
 				   const ViewCamera& camera,
-				   float renderAlpha,
-				   GLuint errorTexture)
+				   float renderAlpha)
 		: m_world (world)
 		, m_camera(camera)
 		, m_renderAlpha(renderAlpha)
-		, m_errorTexture(errorTexture)
 	{ }
 
 	/**
@@ -42,7 +40,6 @@ private:
 	GameWorld* m_world;
 	const ViewCamera& m_camera;
 	float m_renderAlpha;
-	GLuint m_errorTexture;
 
 	void renderInstance(InstanceObject *instance, RenderList& outList);
 	void renderCharacter(CharacterObject *pedestrian, RenderList& outList);
