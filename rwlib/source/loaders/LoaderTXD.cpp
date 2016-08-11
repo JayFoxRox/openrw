@@ -54,21 +54,22 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 		return getErrorTexture();
 	}
 
+	bool isPal4 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL4); //FIXME!
 	bool isPal8 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL8) == RW::BSTextureNative::FORMAT_EXT_PAL8;
-	bool isFulc = texNative.rasterformat == RW::BSTextureNative::FORMAT_1555 ||
-				texNative.rasterformat == RW::BSTextureNative::FORMAT_8888 ||
-				texNative.rasterformat == RW::BSTextureNative::FORMAT_888;
+
 	// Export this value
 	bool transparent = !((texNative.rasterformat&RW::BSTextureNative::FORMAT_888) == RW::BSTextureNative::FORMAT_888);
 
-	if(! (isPal8 || isFulc)) {
-		std::cerr << "Unsuported raster format " << std::dec << texNative.rasterformat << std::endl;
-		return getErrorTexture();
-	}
+  // Strip the flags away
+  uint32_t rasterformat = texNative.rasterformat & 0xFFF;
 
 	GLuint textureName = 0;
 
-	if(isPal8)
+	if(isPal4)
+	{
+		std::cerr << "Unsuported palette mode" << std::endl;
+		return getErrorTexture();
+	} else if(isPal8)
 	{
 		std::vector<uint32_t> fullColor(texNative.width * texNative.height);
 
@@ -82,43 +83,57 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 			GL_RGBA, GL_UNSIGNED_BYTE, fullColor.data()
 		);
 	}
-	else if(isFulc)
+	else
 	{
+    bool isDxt = (texNative.dxttype != 0x00);
+
 		auto coldata = rootSection.raw() + sizeof(RW::BSTextureNative);
 		coldata += sizeof(uint32_t);
+		coldata += 8;
 
-		GLenum type = GL_UNSIGNED_BYTE, format = GL_RGBA;
-		switch(texNative.rasterformat)
-		{
-			case RW::BSTextureNative::FORMAT_1555:
-				format = GL_RGBA;
-				type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-				break;
-			case RW::BSTextureNative::FORMAT_8888:
-				format = GL_BGRA;
-				//type = GL_UNSIGNED_INT_8_8_8_8_REV;
-				coldata += 8;
-				type = GL_UNSIGNED_BYTE;
-				break;
-			case RW::BSTextureNative::FORMAT_888:
-				format = GL_BGRA;
-				type = GL_UNSIGNED_BYTE;
-				break;
-		default:
-				break;
-		}
-
-		glGenTextures(1, &textureName);
-		glBindTexture(GL_TEXTURE_2D, textureName);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA,
-			texNative.width, texNative.height, 0,
-			format, type, coldata
-		);
-	}
-	else {
-		return getErrorTexture();
-	}
+    if(isDxt) {
+      assert(false); // This should never happen, only the formats above are known.
+          std::cerr << "DXT not supported." << std::endl;
+      return getErrorTexture();
+	  }
+    else
+    {
+	    GLenum type = GL_UNSIGNED_BYTE, format = GL_RGBA;
+	    switch(rasterformat)
+	    {
+		    case RW::BSTextureNative::FORMAT_1555:
+			    format = GL_RGBA;
+			    type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+			    break;
+		    case RW::BSTextureNative::FORMAT_565:
+			    format = GL_RGB;
+			    type = GL_UNSIGNED_SHORT_5_6_5_REV;
+			    break;
+        case RW::BSTextureNative::FORMAT_4444:
+			    format = GL_RGBA;
+			    type = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+          break;
+		    case RW::BSTextureNative::FORMAT_8888:
+			    format = GL_BGRA;
+			    type = GL_UNSIGNED_BYTE;
+			    break;
+		    case RW::BSTextureNative::FORMAT_888:
+			    format = GL_BGRA;
+			    type = GL_UNSIGNED_BYTE;
+			    break;
+	    default:
+          std::cerr << "Unsuported raster format " << std::dec << rasterformat << (isDxt ? " (Compressed)" : "") << std::endl;
+          return getErrorTexture();
+	    }
+		  glGenTextures(1, &textureName);
+		  glBindTexture(GL_TEXTURE_2D, textureName);
+		  glTexImage2D(
+			  GL_TEXTURE_2D, 0, GL_RGBA,
+			  texNative.width, texNative.height, 0,
+			  format, type, coldata
+		  );
+    }
+  }
 
 	GLenum texFilter = GL_LINEAR;
 	switch(texNative.filterflags & 0xFF) {
