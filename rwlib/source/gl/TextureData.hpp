@@ -33,4 +33,4 @@ private:
 	bool hasAlpha;
 };
 
-TextureData::Handle getErrorTexture();
+TextureData::Handle getErrorTexture(std::string debugLabel = "");
