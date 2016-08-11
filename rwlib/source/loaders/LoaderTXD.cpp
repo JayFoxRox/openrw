@@ -4,32 +4,6 @@
 #include <iostream>
 #include <algorithm>
 
-GLuint gErrorTextureData[] = { 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF };
-GLuint gDebugTextureData[] = {0xFF0000FF, 0xFF00FF00};
-GLuint gTextureRed[] = {0xFF0000FF};
-GLuint gTextureGreen[] = {0xFF00FF00};
-GLuint gTextureBlue[] = {0xFFFF0000};
-
-TextureData::Handle getErrorTexture()
-{
-	static GLuint errTexName = 0;
-	static TextureData::Handle tex;
-	if(errTexName == 0)
-	{
-		glGenTextures(1, &errTexName);
-		glBindTexture(GL_TEXTURE_2D, errTexName);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA,
-			2, 2, 0,
-			GL_RGBA, GL_UNSIGNED_BYTE, gErrorTextureData
-		);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		tex = TextureData::create(errTexName, {2, 2}, false);
-	}
-	return tex;
-}
-
 const size_t paletteSize = 1024;
 void processPalette(uint32_t* fullColor, RW::BinaryStreamSection& rootSection)
 {

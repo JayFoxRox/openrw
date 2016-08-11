@@ -32,3 +32,5 @@ private:
 	glm::ivec2 size;
 	bool hasAlpha;
 };
+
+TextureData::Handle getErrorTexture();
