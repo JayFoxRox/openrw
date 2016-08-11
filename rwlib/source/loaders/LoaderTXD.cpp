@@ -57,6 +57,8 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 	bool isPal4 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL4); //FIXME!
 	bool isPal8 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL8) == RW::BSTextureNative::FORMAT_EXT_PAL8;
 
+  bool generateMipMaps = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_MIPMAP); //FIXME!
+
 	// Export this value
 	bool transparent = !((texNative.rasterformat&RW::BSTextureNative::FORMAT_888) == RW::BSTextureNative::FORMAT_888);
 
@@ -221,6 +223,8 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode(texNative.wrapU));
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode(texNative.wrapV));
+
+  glObjectLabel(GL_TEXTURE, textureName, -1, debugLabel.c_str());
 
 	return TextureData::create( textureName, { texNative.width, texNative.height }, transparent );
 }
