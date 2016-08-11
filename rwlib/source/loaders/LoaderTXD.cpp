@@ -1,8 +1,11 @@
 #include <loaders/LoaderTXD.hpp>
 #include <gl/TextureData.hpp>
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+
+#include <boost/format.hpp>
 
 const size_t paletteSize = 1024;
 void processPalette(uint32_t* fullColor, RW::BinaryStreamSection& rootSection)
@@ -20,13 +23,16 @@ void processPalette(uint32_t* fullColor, RW::BinaryStreamSection& rootSection)
 
 }
 
-TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStreamSection& rootSection)
+TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStreamSection& rootSection, std::string debugLabel = "")
 {
 	// TODO: Exception handling.
 	if(texNative.platform != 8) {
 		std::cerr << "Unsupported texture platform " << std::dec << texNative.platform << std::endl;
-		return getErrorTexture();
+    debugLabel += (boost::format("platform-not-supported:%d;") % texNative.platform).str();
+		return getErrorTexture(debugLabel);
 	}
+
+  debugLabel += (boost::format("rasterformat:0x%X;") % texNative.platform).str();
 
 	bool isPal4 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL4); //FIXME!
 	bool isPal8 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL8) == RW::BSTextureNative::FORMAT_EXT_PAL8;
@@ -45,7 +51,8 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 	if(isPal4)
 	{
 		std::cerr << "Unsuported palette mode" << std::endl;
-		return getErrorTexture();
+		debugLabel += "pal4-not-supported;";
+		return getErrorTexture(debugLabel);
 	} else if(isPal8)
 	{
 		std::vector<uint32_t> fullColor(texNative.width * texNative.height);
@@ -83,7 +90,8 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 			  break;
 		  default:
         assert(false); // This should never happen, only the formats above are known.
-        return getErrorTexture();
+        debugLabel += "bad-dxt;";
+        return getErrorTexture(debugLabel);
 		  }
 
       // Complain if the s3tc-extension is not available
@@ -132,7 +140,7 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 			    break;
 	    default:
           std::cerr << "Unsuported raster format " << std::dec << rasterformat << (isDxt ? " (Compressed)" : "") << std::endl;
-          return getErrorTexture();
+          return getErrorTexture(debugLabel);
 	    }
 		  glGenTextures(1, &textureName);
 		  glBindTexture(GL_TEXTURE_2D, textureName);
@@ -201,6 +209,8 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 
   glObjectLabel(GL_TEXTURE, textureName, -1, debugLabel.c_str());
 
+  glObjectLabel(GL_TEXTURE, textureName, -1, debugLabel.c_str());
+
 	return TextureData::create( textureName, { texNative.width, texNative.height }, transparent );
 }
 
@@ -217,13 +227,21 @@ bool TextureLoader::loadFromMemory(FileHandle file, TextureArchive &inTextures)
 		if (rootSection.header.id != RW::SID_TextureNative)
 			continue;
 
+    std::string debugLabel = "";
 		RW::BSTextureNative texNative = rootSection.readStructure<RW::BSTextureNative>();
-		std::string name = std::string(texNative.diffuseName);
-		std::string alpha = std::string(texNative.alphaName);
-		std::transform(name.begin(), name.end(), name.begin(), ::tolower );
-		std::transform(alpha.begin(), alpha.end(), alpha.begin(), ::tolower );
 
-		auto texture = createTexture(texNative, rootSection);
+		std::string name = std::string(texNative.diffuseName);
+    debugLabel += "name:'" + name + "';";
+		std::transform(name.begin(), name.end(), name.begin(), ::tolower );
+
+    // Get name for the optional alpha texture
+		std::string alpha = std::string(texNative.alphaName);
+    if (alpha != "") {
+        debugLabel += "alpha:'" + alpha + "';";
+		    std::transform(alpha.begin(), alpha.end(), alpha.begin(), ::tolower );
+    }
+
+		auto texture = createTexture(texNative, rootSection, debugLabel);
 
 		inTextures[{name, alpha}] = texture;
 
