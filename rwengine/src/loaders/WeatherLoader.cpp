@@ -29,6 +29,11 @@ bool WeatherLoader::load(const std::string &filename)
 		std::string tmpstr;
 
 		weather.ambientColor = readRGB(ss);
+#if GAME == GAME_VC
+    readRGB(ss); //FIXME: Amb_Obj
+    readRGB(ss); //FIXME: Amb_bl
+    readRGB(ss); //FIXME: Amb_Obj_bl
+#endif
 		weather.directLightColor = readRGB(ss);
 		weather.skyTopColor = readRGB(ss);
 		weather.skyBottomColor = readRGB(ss);
@@ -48,11 +53,22 @@ bool WeatherLoader::load(const std::string &filename)
 		weather.lowCloudColor = readRGB(ss);
 		weather.topCloudColor = readRGB(ss);
 		weather.bottomCloudColor = readRGB(ss);
-
+#if GAME == GAME_III
+    // BlurRGB + ???
 		for (size_t i = 0; i < 4; i++) {
 			std::getline(ss, tmpstr, ' ');
 			weather.unknown[i] = atoi(tmpstr.c_str());
 		}
+#elif GAME == GAME_VC
+    // BlurRGB?!
+		for (size_t i = 0; i < 3; i++) {
+			std::getline(ss, tmpstr, ' ');
+			weather.unknown[i] = atoi(tmpstr.c_str());
+		}
+    readRGB(ss); //FIXME: Water RGB
+  	std::string a;
+	  std::getline(ss, a, ' ');
+#endif
 
 		this->weather.push_back(weather);
 	}

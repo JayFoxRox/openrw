@@ -31,6 +31,14 @@ public:
 		FloatingPackage=12,
 		FloatingPackageFloating=13,
 		OnStreetSlow=14
+#if GAME == GAME_VC
+    //FIXME!
+    ,
+    a15,
+    a16,
+    a17,
+    a18,
+#endif
 	};
 	enum /*BehaviourFlags*/ {
 		PickupOnFoot = 1,

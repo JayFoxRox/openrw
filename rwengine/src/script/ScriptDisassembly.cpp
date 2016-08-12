@@ -83,10 +83,19 @@ void ScriptDisassembly::disassemble(SCMAddress startAddress)
 							  parameters.back().string);
 					a += sizeof(SCMByte) * 8;
 					break;
+#if GAME == GAME_III
 				case TFloat16:
 					parameters.back().real = scm->read<std::int16_t>(a) / 16.f;
 					a += sizeof(SCMByte) * 2;
 					break;
+#elif GAME == GAME_VC
+				case TFloat32: {
+					  auto v = scm->read<std::uint32_t>(a);
+					  parameters.back().real = *reinterpret_cast<float*>(&v);
+					  a += sizeof(SCMByte) * 4;
+          }
+					break;
+#endif
 				default:
 					throw UnknownType(type, a, "Disassembler");
 					break;

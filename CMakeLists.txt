@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.8)
 
 project(OpenRW)
 
+
+# This is a hack LUT
+add_definitions(-DGAME_III=1)
+add_definitions(-DGAME_VC=2)
+
+# This is a hack selection
+add_definitions(-DGAME=2)
+
 #
 # Options
 #
@@ -62,9 +70,9 @@ else()
 	add_definitions(-DRENDER_PROFILER=0 -DRW_PROFILER=0)
 ENDIF()
 
-IF(${ENABLE_SCRIPT_DEBUG})
+#IF(${ENABLE_SCRIPT_DEBUG})
 	add_definitions(-DRW_SCRIPT_DEBUG)
-ENDIF()
+#ENDIF()
 
 if(${RW_VERBOSE_DEBUG_MESSAGES})
 	add_definitions(-DRW_VERBOSE_DEBUG_MESSAGES=1)

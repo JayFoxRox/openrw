@@ -52,7 +52,11 @@ void GameData::load()
 	index.indexTree(datpath);
 	
 	parseDAT(datpath+"/data/default.dat");
+#if GAME == GAME_III
 	parseDAT(datpath+"/data/gta3.dat");
+#elif GAME == GAME_VC
+	parseDAT(datpath+"/data/gta_vc.dat");
+#endif
 	
 	loadDFF("wheels.dff");
 	loadDFF("weapons.dff");
@@ -95,7 +99,18 @@ void GameData::parseDAT(const std::string& path)
 				cmd = line.substr(0, space);
 				if(cmd == "IDE")
 				{
-					addIDE(line.substr(space+1));
+          std::string idePath = line.substr(space+1);
+					addIDE(idePath);
+#if GAME == GAME_VC
+          size_t delimiter = idePath.find_last_of("/\\", idePath.length());
+          auto ideName = idePath.substr(delimiter != std::string::npos ? delimiter + 1 : 0);
+          auto colName = ideName.substr(0, ideName.length() - 3) + "COL";
+		      std::transform(colName.begin(), colName.end(), colName.begin(), ::tolower);
+        	auto fileHandle = index.openFile(colName);
+          if (fileHandle != NULL) {
+  					loadCOL(-1, fileHandle);
+          }
+#endif
 				}
 				else if(cmd == "SPLASH")
 				{
@@ -174,6 +189,19 @@ uint16_t GameData::findModelObject(const std::string model)
 							  });
 	if( defit != objectTypes.end() ) return defit->first;
 	return -1;
+}
+
+void GameData::loadCOL(const size_t zone, const FileHandle& file)
+{
+	RW_UNUSED(zone);
+
+	LoaderCOL col;
+		
+	if(col.load(file)) {
+		for( size_t i = 0; i < col.instances.size(); ++i ) {
+			collisions[col.instances[i]->name] = std::move(col.instances[i]);
+		}
+	}
 }
 
 void GameData::loadCOL(const size_t zone, const std::string& name)

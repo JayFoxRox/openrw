@@ -34,7 +34,11 @@ enum SCMType {
 	TLocal       = 0x03,
 	TInt8        = 0x04,
 	TInt16       = 0x05,
+#if GAME == GAME_III
 	TFloat16     = 0x06,
+#elif GAME == GAME_VC
+	TFloat32     = 0x06,
+#endif
 	TString      = 0x09,
 };
 
@@ -50,7 +54,11 @@ static SCMTypeInfoTable typeData = {
 	{TInt32,  {4}},
 	{TGlobal, {2}},
 	{TLocal,  {2}},
+#if GAME == GAME_III
 	{TFloat16,{2}},
+#elif GAME == GAME_VC
+	{TFloat32,{4}},
+#endif
 	{EndOfArgList, {0}},
 };
 
@@ -90,8 +98,13 @@ struct SCMOpcodeParameter {
 		case TGlobal:
 		case TLocal:
 			return *globalReal;
+#if GAME == GAME_III
 		case TFloat16:
 			return real;
+#elif GAME == GAME_VC
+		case TFloat32:
+			return real;
+#endif
 		default:
 			RW_ERROR("Unhandled type");
 			return 0;

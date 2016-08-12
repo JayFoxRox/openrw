@@ -32,8 +32,13 @@
 std::string formatValue(const SCMOpcodeParameter& p)
 {
 	switch (p.type) {
+#if GAME == GAME_III
 	case TFloat16:
 		return std::to_string(p.real);
+#elif GAME == GAME_VC
+	case TFloat32:
+		return std::to_string(p.real);
+#endif
 	default:
 		return std::to_string(p.integerValue());
 	}
@@ -439,7 +444,11 @@ void game_create_garage(const ScriptArguments& args)
 	});
 	int garageIndex = args.getWorld()->state->garages.size() - 1;
 	
+#if GAME == GAME_III
 	*args[7].globalInteger = garageIndex;
+#elif GAME == GAME_VC
+	*args[9].globalInteger = garageIndex;
+#endif
 }
 
 bool game_is_car_inside_garage(const ScriptArguments& args)
@@ -585,6 +594,7 @@ void game_set_widescreen(const ScriptArguments& args)
 	args.getWorld()->state->isCinematic = !!args[0].integer;
 }
 
+#if GAME == GAME_III
 static const char* sprite_names[] = {
 	"", // 0
 	"radar_asuka",
@@ -608,6 +618,50 @@ static const char* sprite_names[] = {
 	"radar_tony",
 	"radar_weapon",
 };
+#elif GAME == GAME_VC
+static const char* sprite_names[] = {
+	"", // 0
+  "radar_centre",
+  "arrow",
+  "radar_north",
+  "radar_avery",
+  "radar_biker",
+  "radar_cortez",
+  "radar_diaz",
+  "radar_kent",
+  "radar_lawyer",
+  "radar_phil",
+  "bikers",
+  "boatyard",
+  "club",
+  "cubans",
+  "filmstudio",
+  "gun",
+  "haitians",
+  "hardware",
+  "radar_save",
+  "radar_strip",
+  "icecream",
+  "kcabs",
+  "lovefist",
+  "printworks",
+  "", // 25
+  "SunYard",
+  "spray",
+  "tshirt",
+  "tommy",
+  "phone",
+  "RWildstyle",
+  "RFlash",
+  "RKchat",
+  "RFever",
+  "RVRock",
+  "RVCPR",
+  "REspantoso",
+  "REmotion",
+  "RWave",
+};
+#endif
 
 void game_add_contact_blip(const ScriptArguments& args)
 {
@@ -972,7 +1026,12 @@ bool game_collision_loaded(const ScriptArguments& args)
 
 void game_load_audio(const ScriptArguments& args)
 {
+#if GAME == GAME_III
 	std::string name = args[0].string;
+#elif GAME == GAME_VC
+	auto index = args[0].integerValue();
+	std::string name = args[1].string;
+#endif
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
 	if ( ! args.getWorld()->data->loadAudioClip(name, name + ".wav")) {
@@ -984,12 +1043,18 @@ void game_load_audio(const ScriptArguments& args)
 
 bool game_is_audio_loaded(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	return world->sound.isLoaded(world->missionAudio);
 }
 
 void game_play_mission_audio(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	if (world->missionAudio.length() > 0) {
 		world->sound.playSound(world->missionAudio);
@@ -997,11 +1062,16 @@ void game_play_mission_audio(const ScriptArguments& args)
 }
 bool game_is_audio_finished(const ScriptArguments& args)
 {
+#if GAME == GAME_VC
+	auto index = args[0].integerValue();
+#endif
 	auto world = args.getWorld();
 	bool isFinished = ! world->sound.isPlaying(world->missionAudio);
 
 	if (isFinished) {
+#if GAME != GAME_VC
 		world->missionAudio = "";
+#endif
 	}
 
 	return isFinished;
@@ -1227,14 +1297,22 @@ GameModule::GameModule()
 	bindUnimplemented( 0x014F, game_stop_timer, 1, "Stop Timer" );
 	
 	bindUnimplemented( 0x0151, game_clear_counter, 1, "Clear Counter" );
-	bindFunction(0x0152, game_set_zone_car_info, 17, "Set zone car info" );
+#if GAME == GAME_III
+	bindFunction(0x0152, game_set_zone_car_info, 11, "Set zone car info" );
+#elif GAME == GAME_VC
+	bindUnimplemented(0x0152, game_set_zone_car_info, 13, "Set zone car info" );
+#endif
 	
 	bindUnimplemented( 0x0158, game_camera_follow_vehicle, 3, "Camera Follow Vehicle" );
 	bindFunction(0x0159, game_camera_follow_character, 3, "Camera Follow Character" );
 	
 	bindFunction(0x015A, game_reset_camera, 0, "Reset Camera" );
 	
+#if GAME == GAME_III
 	bindFunction(0x015C, game_set_zone_ped_info, 11, "Set zone ped info" );
+#elif GAME == GAME_VC
+	bindUnimplemented(0x015C, game_set_zone_ped_info, 13, "Set zone ped info" );
+#endif
     bindUnimplemented( 0x015D, game_set_timescale;, 1, "Set Game Timescale" );
 
 	bindFunction(0x015F, game_camera_fixed_position, 6, "Set Fixed Camera Position" );
@@ -1256,6 +1334,7 @@ GameModule::GameModule()
 	bindFunction(0x0186, game_add_object_blip<VehicleObject>, 2, "Add Blip for Vehicle");
 	bindFunction(0x0187, game_add_object_blip<CharacterObject>, 2, "Add Blip for Character");
 
+	bindUnimplemented( 0x0189, game_todo, 4, "" ); // Returns crap
 	bindFunction(0x018A, game_add_location_blip, 4, "Add Blip for Coord");
 	bindFunction(0x018B, game_change_blip_mode, 2, "Change Blip Display Mode");
 	bindUnimplemented( 0x018C, game_play_sound_at, 4, "Play Sound At" );
@@ -1292,7 +1371,11 @@ GameModule::GameModule()
 	
 	bindUnimplemented( 0x01F9, game_start_kill_frenzy, 9, "Start Kill Frenzy" );
 
+#if GAME == GAME_III
 	bindFunction(0x0219, game_create_garage, 8, "Create Garage" );
+#elif GAME == GAME_VC
+	bindFunction(0x0219, game_create_garage, 10, "Create Garage" );
+#endif
 
 	bindUnimplemented( 0x021B, game_set_target_car_for_mission_garage, 2, "Set Target Car for Mission Garage" );
 	bindFunction(0x021C, game_is_car_inside_garage, 1, "Is Car Inside Garage" );
@@ -1337,6 +1420,8 @@ GameModule::GameModule()
 	bindFunction(0x02A7, game_add_contact_blip, 5, "Add Contact Blip");
 	bindFunction(0x02A8, game_add_sprite_blip, 5, "Add Sprite Blip");
 	
+	bindUnimplemented( 0x02D7, game_todo, 2, "" ); // Cond
+
 	bindFunction(0x02E4, game_load_cutscene, 1, "Load Cutscene Data" );
 	bindFunction(0x02E5, game_create_cutscene_object, 2, "Create Cutscene Object" );
 	bindFunction(0x02E6, game_set_cutscene_anim, 2, "Set Cutscene Animation" );
@@ -1395,7 +1480,11 @@ GameModule::GameModule()
 	bindUnimplemented( 0x0373, game_camera_behind_player, 0, "Set Camera Behind Player" );
 	bindUnimplemented( 0x0374, game_set_motion_blur, 1, "Set Motion Blur" );
 
+	bindUnimplemented( 0x0382, game_todo, 2, "" );
+
 	bindUnimplemented( 0x038B, game_load_models_now, 0, "Load Requested Models Now" );
+
+	bindUnimplemented( 0x0392, game_todo, 2, "" );
 	
 	bindFunction(0x0394, game_play_music_id, 1, "Play music");
 	bindFunction(0x0395, game_clear_area, 5, "Clear Area Vehicles and Pedestrians" );
@@ -1427,11 +1516,17 @@ GameModule::GameModule()
 	
 	bindUnimplemented( 0x03CB, game_load_area, 3, "Load Area Near" );
 	
+#if GAME == GAME_III
 	bindFunction(0x03CF, game_load_audio, 1, "Load Audio" );
-	
 	bindFunction(0x03D0, game_is_audio_loaded, 0, "Is Audio Loaded" );
 	bindFunction(0x03D1, game_play_mission_audio, 0, "Play Mission Audio" );
 	bindFunction(0x03D2, game_is_audio_finished, 0, "Is Mission Audio Finished" );
+#elif GAME == GAME_VC
+	bindFunction(0x03CF, game_load_audio, 2, "Load Audio" );
+	bindFunction(0x03D0, game_is_audio_loaded, 1, "Is Audio Loaded" );
+	bindFunction(0x03D1, game_play_mission_audio, 1, "Play Mission Audio" );
+	bindFunction(0x03D2, game_is_audio_finished, 1, "Is Mission Audio Finished" );
+#endif
 	
 	bindFunction(0x03D4, game_import_garage_contains_needed_car, 2, "Import Garage Contains Needed Car" );
 	bindFunction(0x03D5, game_clear_print, 1, "Clear This Print" );
@@ -1488,4 +1583,37 @@ GameModule::GameModule()
 	bindFunction(0x044D, game_load_splash, 1, "Load Splash Screen" );
 	
 	bindUnimplemented( 0x0452, game_enable_user_camera, 0, "Enable User Camera Controll" );
+
+	bindUnimplemented( 0x047E, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x049C, game_todo, 3, "" ); // Returns crap
+	bindUnimplemented( 0x049D, game_todo, 2, "" );
+	bindUnimplemented( 0x049E, game_todo, 2, "" );
+	bindUnimplemented( 0x049F, game_todo, 2, "" );
+	bindUnimplemented( 0x04A8, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AA, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AC, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04AD, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04BB, game_todo, 1, "" );
+	bindUnimplemented( 0x04C9, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x04CE, game_todo, 5, "" ); // Returns crap
+	bindUnimplemented( 0x04EC, game_todo, 13, "" );
+	bindUnimplemented( 0x04F8, game_todo, 13, "" );
+	bindUnimplemented( 0x04FA, game_todo, 1, "" );
+	bindUnimplemented( 0x04FC, game_todo, 7, "" );
+	bindUnimplemented( 0x054C, game_todo, 1, "" );
+	bindUnimplemented( 0x055B, game_todo, 5, "" ); // Returns crap
+	bindUnimplemented( 0x0566, game_todo, 2, "" );
+	bindUnimplemented( 0x056C, game_todo, 1, "" ); // Cond
+	bindUnimplemented( 0x0578, game_todo, 1, "" );
+	bindUnimplemented( 0x0579, game_todo, 1, "" );
+	bindUnimplemented( 0x057A, game_todo, 2, "" );
+	bindUnimplemented( 0x057B, game_todo, 0, "" );
+	bindUnimplemented( 0x057C, game_todo, 1, "" );
+	bindUnimplemented( 0x057D, game_todo, 1, "" );
+	bindUnimplemented( 0x057E, game_todo, 1, "" );
+	bindUnimplemented( 0x0581, game_todo, 1, "" );
+	bindUnimplemented( 0x058C, game_todo, 1, "" );
+	bindUnimplemented( 0x058D, game_todo, 4, "" );
+	bindUnimplemented( 0x0592, game_todo, 2, "" );
+	bindUnimplemented( 0x0596, game_todo, 1, "" ); // Cond
 }

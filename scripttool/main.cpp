@@ -85,9 +85,15 @@ void dumpOpcodes(SCMFile* scm, SCMOpcodes* codes, unsigned int offset, unsigned 
 				case TInt32:
 					std::cout << "  i32: " << param.integer;
 					break;
+#if GAME == GAME_III
 				case TFloat16:
 					std::cout << "  f16: " << param.real;
 					break;
+#elif GAME == GAME_VC
+				case TFloat32:
+					std::cout << "  f32: " << param.real;
+					break;
+#endif
 				case TString:
 					std::cout << "  str: " << param.string;
 					break;

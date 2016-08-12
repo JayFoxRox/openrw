@@ -75,7 +75,11 @@ int GameConfig::handler(void* user,
 	auto self = static_cast<GameConfig*>(user);
 #define MATCH(_s, _n) (strcmp(_s, section) == 0 && strcmp(_n, name) == 0)
 
-	if (MATCH("game", "path"))
+#if GAME == GAME_III
+	if (MATCH("game_iii", "path"))
+#elif GAME == GAME_VC
+	if (MATCH("game_vc", "path"))
+#endif
 	{
 		self->m_gamePath = value;
 	}

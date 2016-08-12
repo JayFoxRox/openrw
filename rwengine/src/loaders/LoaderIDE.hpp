@@ -22,6 +22,9 @@ public:
 		HIER,
 		TWODFX,
 		PATH,
+#if GAME == GAME_VC
+    WEAP,
+#endif
 	};
 	
 	// Load the IDE data into memory

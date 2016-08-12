@@ -64,6 +64,9 @@ bool LoaderIPL::load(const std::string& filename)
 			{
 				std::string id;
 				std::string model;
+#if GAME == GAME_VC
+				std::string interior;
+#endif
 				std::string posX, posY, posZ;
 				std::string scaleX, scaleY, scaleZ;
 				std::string rotX, rotY, rotZ, rotW;
@@ -73,6 +76,11 @@ bool LoaderIPL::load(const std::string& filename)
 				// read all the contents of the line
 				getline(strstream, id, ',');
 				getline(strstream, model, ',');
+#if GAME == GAME_VC
+        //FIXME: Add support for old format too!
+        //FIXME: Use interior
+				getline(strstream, interior, ',');
+#endif
 				getline(strstream, posX, ',');
 				getline(strstream, posY, ',');
 				getline(strstream, posZ, ',');

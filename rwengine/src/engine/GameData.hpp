@@ -85,6 +85,7 @@ public:
 	/**
 	 * Handles the parsing of a COL file.
 	 */
+  void loadCOL(const size_t zone, const FileHandle& file);
 	void loadCOL(const size_t zone, const std::string& name);
 	
 	/**

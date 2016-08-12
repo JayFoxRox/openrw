@@ -100,10 +100,16 @@ IngameState::IngameState(RWGame* game, bool newgame, const std::string& save)
 
 void IngameState::startTest()
 {
+#if GAME == GAME_III
 	auto playerChar = getWorld()->createPlayer({270.f, -605.f, 40.f});
+#elif GAME == GAME_VC
+	auto playerChar = getWorld()->createPlayer({10.f, 100.f, 10.f});
+#endif
 
+  getWorld()->state->basic.gameHour = 12;
 	getWorld()->state->playerObject = playerChar->getGameObjectID();
 
+#if GAME == GAME_III
 	glm::vec3 itemspawn(276.5f, -609.f, 36.5f);
 	for (int i = 1; i < maxInventorySlots; ++i) {
 		auto item = getWorld()->getInventoryItem(i);
@@ -133,6 +139,7 @@ void IngameState::startTest()
 			sp += sr * glm::vec3( 2.f + v->info->handling.dimensions.x, 0.f, 0.f);
 		}
 	}
+#endif
 }
 
 void IngameState::startGame()

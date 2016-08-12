@@ -110,7 +110,11 @@ void WaterRenderer::render(GameRenderer* renderer, GameWorld* world)
 {
 	auto r = renderer->getRenderer();
 
+#if GAME == GAME_III
 	auto waterTex = world->data->findTexture("water_old");
+#elif GAME == GAME_VC
+	auto waterTex = world->data->findTexture("waterclear256");
+#endif
 	RW_CHECK(waterTex != nullptr, "Water texture is null");
 	if (waterTex == nullptr) {
 		// Can't render water if we don't have a texture.
