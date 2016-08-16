@@ -139,10 +139,6 @@ add_library(rwengine
     ${RWENGINE_SOURCES}
 )
 
-if(MINGW)
-	add_definitions(-D _USE_MATH_DEFINES)	
-endif()
-
 target_link_libraries(rwengine
 	rwlib
 	${MAD_LIBRARY}
