@@ -139,6 +139,12 @@ add_library(rwengine
     ${RWENGINE_SOURCES}
 )
 
+if(MINGW)
+	target_link_libraries(rwengine
+	iconv
+	mman)
+endif()
+
 target_link_libraries(rwengine
 	rwlib
 	${MAD_LIBRARY}
