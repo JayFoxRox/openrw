@@ -6,9 +6,6 @@ project(OpenRW)
 # Options
 #
 
-# Also find nuget packages
-set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${CMAKE_SOURCE_DIR}/")
-
 # Global Build Configuration
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DRW_DEBUG=1")
 if(NOT MSVC)
@@ -53,6 +50,11 @@ endif ()
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-array-member-paren-init")
+endif()
+
+if(MSVC)
+	# The OpenAL binaries we use don't use the MSVC exception handling
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
 endif()
 
 if(MINGW)
