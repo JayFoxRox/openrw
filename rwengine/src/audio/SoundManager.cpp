@@ -1,8 +1,12 @@
 #include <audio/SoundManager.hpp>
+#ifndef _MSC_VER
 #include <audio/MADStream.hpp>
+#endif
 
 #include "audio/alCheck.hpp"
+#ifndef _MSC_VER
 #include "audio/MADStream.hpp"
+#endif
 
 #include <array>
 #include <iostream>
@@ -48,6 +52,7 @@ bool SoundManager::initializeOpenAL()
 
 void SoundManager::SoundSource::loadFromFile(const std::string& filename)
 {
+#ifndef _MSC_VER
 	fileInfo.format = 0;
 	file = sf_open(filename.c_str(), SFM_READ, &fileInfo);
 
@@ -61,6 +66,7 @@ void SoundManager::SoundSource::loadFromFile(const std::string& filename)
 	} else {
 		std::cerr << "Error opening sound file \"" << filename << "\": " << sf_strerror(file) << std::endl;
 	}
+#endif
 }
 
 SoundManager::SoundBuffer::SoundBuffer()
@@ -77,6 +83,7 @@ SoundManager::SoundBuffer::SoundBuffer()
 
 bool SoundManager::SoundBuffer::bufferData(SoundSource& soundSource)
 {
+#ifndef _MSC_VER
 	alCheck(alBufferData(
 		buffer,
 		soundSource.fileInfo.channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
@@ -84,6 +91,15 @@ bool SoundManager::SoundBuffer::bufferData(SoundSource& soundSource)
 		soundSource.data.size() * sizeof(uint16_t),
 		soundSource.fileInfo.samplerate
 	));
+#else
+	alCheck(alBufferData(
+		buffer,
+		AL_FORMAT_MONO16,
+		&soundSource.data.front(),
+		soundSource.data.size() * sizeof(uint16_t),
+		44100
+	));
+#endif
 	alCheck(alSourcei(source, AL_BUFFER, buffer));
 
 	return true;
@@ -150,6 +166,7 @@ bool SoundManager::playBackground(const std::string& fileName)
 
 bool SoundManager::loadMusic(const std::string& name, const std::string& fileName)
 {
+#ifndef _MSC_VER
 	MADStream* music = nullptr;
 	auto music_iter = musics.find(name);
 
@@ -161,20 +178,27 @@ bool SoundManager::loadMusic(const std::string& name, const std::string& fileNam
 	}
 
 	return music->openFromFile(fileName);
+#else
+  return true;
+#endif
 }
 void SoundManager::playMusic(const std::string& name)
 {
+#ifndef _MSC_VER
 	auto music = musics.find(name);
 	if (music != musics.end()) {
 		music->second.play();
 	}
+#endif
 }
 void SoundManager::stopMusic(const std::string& name)
 {
+#ifndef _MSC_VER
 	auto music = musics.find(name);
 	if (music != musics.end()) {
 		music->second.stop();
 	}
+#endif
 }
 
 void SoundManager::pause(bool p)

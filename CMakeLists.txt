@@ -8,7 +8,9 @@ project(OpenRW)
 
 # Global Build Configuration
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DRW_DEBUG=1")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pthread -Wextra -Wpedantic")
+if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -Wall -Wextra -Wpedantic")
+endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 set(RW_VERBOSE_DEBUG_MESSAGES 1 CACHE BOOL "Print verbose debugging messages")
@@ -50,6 +52,11 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-array-member-paren-init")
 endif()
 
+if(MSVC)
+	# The OpenAL binaries we use don't use the MSVC exception handling
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
+endif()
+
 if(MINGW)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 endif()
@@ -89,9 +96,11 @@ ENDIF()
 find_package(OpenGL REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(Bullet REQUIRED)
-find_package(MAD REQUIRED)
 find_package(GLM REQUIRED)
-find_package(LibSndFile REQUIRED)
+if (NOT MSVC)
+  find_package(MAD REQUIRED)
+  find_package(LibSndFile REQUIRED)
+ENDIF()
 find_package(SDL2 REQUIRED)
 
 include_directories(

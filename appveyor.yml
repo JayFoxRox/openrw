@@ -1,0 +1,25 @@
+# shallow clone
+clone_depth: 3
+
+os: Visual Studio 2015
+
+platform:
+#  - x86
+  - x64
+
+configuration:
+#  - Debug
+  - Release
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - cmd: sh %APPVEYOR_BUILD_FOLDER%\appveyor_before_build.sh %PLATFORM%
+
+build:
+  project: Build_64/openrw.sln
+  parallel: true
+
+test_script:
+  - cd Build_64 && tests/run_tests.exe && cd ..
