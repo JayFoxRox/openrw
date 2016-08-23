@@ -162,20 +162,77 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 	}
+	drawBlip(mi.worldCenter + glm::vec2(0.f, mi.worldSize), view, mi, "radar_north", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 24.f);
 	
-	for(auto& blip : world->state->radarBlips)
+	for(auto& radarBlip : world->state->radarBlips)
 	{
-		glm::vec2 blippos( blip.second.coord );
-		if( blip.second.target > 0 )
+    const auto& blip = radarBlip.second;
+
+    // Only show blips which are currently not hidden or only marker arrows
+    if (blip.display == BlipData::Hide || blip.display == BlipData::MarkerOnly) {
+      continue;
+    }
+
+		glm::vec2 blippos( blip.coord );
+		if( blip.target > 0 )
 		{
-			GameObject* object = world->getBlipTarget(blip.second);
+			GameObject* object = world->getBlipTarget(blip);
 			if( object )
 			{
 				blippos = glm::vec2( object->getPosition() );
 			}
 		}
 		
-		drawBlip(blippos, view, mi, blip.second.texture);
+    const auto& texture = blip.texture;
+    if (!texture.empty()) {
+  		drawBlip(blippos, view, mi, texture, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f);
+    } else {
+      // Colours from http://www.gtamodding.com/wiki/0165 (but not actually specific to that opcode!)
+      uint32_t rgbaValue;
+      switch(blip.colour) {
+      case 0: // RED
+        rgbaValue = blip.dimmed ? 0x7F0000FF : 0x712B49FF;
+        break;
+      case 1: // GREEN
+        rgbaValue = blip.dimmed ? 0x007F00FF : 0x5FA06AFF; 
+        break;
+      case 2: // BLUE
+        rgbaValue = blip.dimmed ? 0x00007FFF : 0x80A7F3FF;
+        break;
+      case 3: // WHITE
+        rgbaValue = blip.dimmed ? 0x7F7F7FFF : 0xE1E1E1FF;
+        break;
+      case 4: // YELLOW
+        rgbaValue = blip.dimmed ? 0x7F7F00FF : 0xFFFF00FF;
+        break;
+      case 5: // PURPLE
+        rgbaValue = blip.dimmed ? 0x7F007FFF : 0xFF00FFFF;
+        break;
+      case 6: // CYAN
+        rgbaValue = blip.dimmed ? 0x007F7FFF : 0x00FFFFFF;
+        break;
+      default: // Extended mode (Dimming ignored)
+        rgbaValue = blip.colour;
+        break;
+      }
+
+      glm::vec4 colour(
+        (rgbaValue >> 24) / 255.0f,
+        ((rgbaValue >> 16) & 0xFF) / 255.0f,
+        ((rgbaValue >> 8) & 0xFF) / 255.0f,
+        1.0f // Note: Alpha is not controlled by blip
+      );
+
+      // @todo This is a hack which was introduced because GTA uses a 16px radar_north at 640x480
+      //       OpenRW uses 24 instead, which means we have a 150% increase in scale somehow..
+      float badScale = 1.5f;
+
+      float size = blip.size * 2.0f * badScale;
+
+      // Draw a black outline first, then draw the actual blip
+  		drawBlip(blippos, view, mi, texture, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), size + 2.0f * badScale);
+  		drawBlip(blippos, view, mi, texture, colour, size);
+    }
 	}
 	
 	// Draw the player blip
@@ -184,10 +241,8 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 	{
 		glm::vec2 plyblip(player->getPosition());
 		float hdg = glm::roll(player->getRotation());
-		drawBlip(plyblip, view, mi, "radar_centre", mi.rotation - hdg);
+		drawBlip(plyblip, view, mi, "radar_centre", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f, mi.rotation - hdg);
 	}
-
-	drawBlip(mi.worldCenter + glm::vec2(0.f, mi.worldSize), view, mi, "radar_north", 0.f, 24.f);
 
 	glBindVertexArray( 0 );
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -198,7 +253,7 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 	renderer->popDebugGroup();
 }
 
-void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, float heading, float size)
+void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading)
 {
 	glm::vec2 adjustedCoord = coord;
 	if (mi.clipToSize)
@@ -222,14 +277,9 @@ void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const 
 	{
 		auto sprite= data->findTexture(texture);
 		tex = sprite->getName();
-		renderer->setUniform(rectProg, "colour", glm::vec4(0.f, 0.f, 0.f, 1.f));
 	}
-	else
-	{
-		renderer->setUniform(rectProg, "colour", glm::vec4(1.0f, 1.0f, 1.0f, 1.f));
-	}
-	
-	glBindTexture(GL_TEXTURE_2D, tex);
 
+	renderer->setUniform(rectProg, "colour", colour);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
