@@ -42,10 +42,10 @@ MapRenderer::MapRenderer(Renderer* renderer, GameData* _data)
 : data(_data), renderer(renderer)
 {
 	rectGeom.uploadVertices<VertexP2>({
-		{-.5f,  .5f},
-		{ .5f,  .5f},
 		{-.5f, -.5f},
-		{ .5f, -.5f}
+		{ .5f, -.5f},
+		{ .5f,  .5f},
+		{-.5f,  .5f}
 	});
 	rect.addGeometry(&rectGeom);
 	rect.setFaceType(GL_TRIANGLE_STRIP);
@@ -142,7 +142,7 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 		
 		renderer->setUniform(rectProg, "model", tilemodel);
 		
-		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+		glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 	}
 
 	// From here on out we will work in screenspace
@@ -159,10 +159,19 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 		model = glm::scale(model, glm::vec3(mi.screenSize*1.07));
 		renderer->setUniform(rectProg, "model", model);
 		glBindTexture(GL_TEXTURE_2D, radarDisc->getName());
-		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+		glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 	}
 	drawBlip(mi.worldCenter + glm::vec2(0.f, mi.worldSize), view, mi, "radar_north", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 24.f);
+
+	// Draw the player blip
+	auto player = world->pedestrianPool.find(world->state->playerObject);
+	if( player )
+	{
+		glm::vec2 plyblip(player->getPosition());
+		float hdg = glm::roll(player->getRotation());
+		drawBlip(plyblip, view, mi, "radar_centre", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f, mi.rotation - hdg);
+	}
 	
 	for(auto& radarBlip : world->state->radarBlips)
 	{
@@ -234,15 +243,6 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
   		drawBlip(blippos, view, mi, texture, colour, size);
     }
 	}
-	
-	// Draw the player blip
-	auto player = world->pedestrianPool.find(world->state->playerObject);
-	if( player )
-	{
-		glm::vec2 plyblip(player->getPosition());
-		float hdg = glm::roll(player->getRotation());
-		drawBlip(plyblip, view, mi, "radar_centre", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f, mi.rotation - hdg);
-	}
 
 	glBindVertexArray( 0 );
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -253,7 +253,7 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
 	renderer->popDebugGroup();
 }
 
-void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading)
+void MapRenderer::prepareBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading)
 {
 	glm::vec2 adjustedCoord = coord;
 	if (mi.clipToSize)
@@ -281,5 +281,43 @@ void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const 
 
 	renderer->setUniform(rectProg, "colour", colour);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
+
+void MapRenderer::drawBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading) {
+  prepareBlip(coord, view, mi, texture, colour, size, heading);
+	glBindVertexArray( rect.getVAOName() );
+	glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
+}
+
+void MapRenderer::drawSquareMarker(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading) {
+  drawBlip(coord, view, mi, texture, colour, size, heading);
+  // Draw outline
+	renderer->setUniform(rectProg, "colour", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  glDrawArrays( GL_LINE_LOOP, 0, 4 );
+}
+
+void MapRenderer::drawTriangleMarker(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading) {
+  glBindVertexArray( triangle.getVAOName() );
+  prepareBlip(coord, view, mi, texture, colour, size, heading);
+	glDrawArrays( GL_TRIANGLES, 0, 3 );
+  // Draw outline
+	renderer->setUniform(rectProg, "colour", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  glDrawArrays( GL_LINE_LOOP, 0, 3 );
+}
+
+void MapRenderer::drawMarker(const glm::vec3& coord, float referenceHeight, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size) {
+  // Apparently the up/down arrows were only introduced in Vice City?!
+#if 0
+  // @todo find out at which height difference the triangles are shown
+  float heightDiff = coord.z - referenceHeight;
+  if (std::abs(heightDiff) < 5.0f) {
+		drawSquareMarker(glm::vec2(coord), view, mi, texture, colour, size, 0.0f);
+  } else {
+    // @todo Triangle size / shape might not be correct (need reference screenshot)
+		drawTriangleMarker(glm::vec2(coord), view, mi, texture, colour, size * 1.5f, heightDiff > 0.0f ? 0.0f : glm::pi<float>());
+  }
+#else
+	drawSquareMarker(glm::vec2(coord), view, mi, texture, colour, size, 0.0f);
+#endif
+}
+
