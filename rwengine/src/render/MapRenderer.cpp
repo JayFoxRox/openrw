@@ -48,7 +48,15 @@ MapRenderer::MapRenderer(Renderer* renderer, GameData* _data)
 		{-.5f,  .5f}
 	});
 	rect.addGeometry(&rectGeom);
-	rect.setFaceType(GL_TRIANGLE_STRIP);
+	rect.setFaceType(GL_TRIANGLE_FAN);
+
+	triangleGeom.uploadVertices<VertexP2>({
+		{-.5f,  .5f},
+		{ .5f,  .5f},
+		{ .0f, -.5f}
+	});
+	triangle.addGeometry(&triangleGeom);
+	triangle.setFaceType(GL_TRIANGLES);
 
 	std::vector<VertexP2> circleVerts;
 	circleVerts.push_back({0.f, 0.f});
@@ -182,19 +190,19 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
       continue;
     }
 
-		glm::vec2 blippos( blip.coord );
+		glm::vec3 blippos( blip.coord );
 		if( blip.target > 0 )
 		{
 			GameObject* object = world->getBlipTarget(blip);
 			if( object )
 			{
-				blippos = glm::vec2( object->getPosition() );
+				blippos = object->getPosition();
 			}
 		}
 		
     const auto& texture = blip.texture;
     if (!texture.empty()) {
-  		drawBlip(blippos, view, mi, texture, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f);
+  		drawBlip(glm::vec2(blippos), view, mi, texture, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 18.0f);
     } else {
       // Colours from http://www.gtamodding.com/wiki/0165 (but not actually specific to that opcode!)
       uint32_t rgbaValue;
@@ -232,15 +240,11 @@ void MapRenderer::draw(GameWorld* world, const MapInfo& mi)
         1.0f // Note: Alpha is not controlled by blip
       );
 
-      // @todo This is a hack which was introduced because GTA uses a 16px radar_north at 640x480
-      //       OpenRW uses 24 instead, which means we have a 150% increase in scale somehow..
-      float badScale = 1.5f;
-
-      float size = blip.size * 2.0f * badScale;
-
-      // Draw a black outline first, then draw the actual blip
-  		drawBlip(blippos, view, mi, texture, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), size + 2.0f * badScale);
-  		drawBlip(blippos, view, mi, texture, colour, size);
+      // @todo JayFoxRox: I think the reference height / radar is related to the players camera position actually?
+      float referenceHeight = player ? player->position.z : 10.0f;
+      // @todo 1.5f factor is a hack which was introduced because GTA uses a 16px radar_north at 640x480
+      //       OpenRW uses 24 instead, which means we have a 150% increase in scale somehow..?
+      drawMarker(blippos, referenceHeight, view, mi, texture, colour, blip.size * 2.0f * 1.5f);
     }
 	}
 
