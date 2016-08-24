@@ -375,42 +375,43 @@ void GameRenderer::renderWorld(GameWorld* world, const ViewCamera &camera, float
 		auto arrowFrame = arrowModel->resource->findFrame( "arrow" );
 		for( auto& blip : world->state->radarBlips )
 		{
-			if( blip.second.display == BlipData::Show )
-			{
-				glm::mat4 model;
+			if( blip.second.display == BlipData::Hide || blip.second.display == BlipData::RadarOnly ) {
+        continue;
+      }
 
-				if( blip.second.target > 0 )
-				{
-					auto object = world->getBlipTarget(blip.second);
-					if( object )
-					{
-						model = object->getTimeAdjustedTransform( _renderAlpha );
-					}
-				}
-				else
-				{
-					model = glm::translate( model, blip.second.coord );
-				}
+		  glm::mat4 model;
 
-				float a = world->getGameTime() * glm::pi<float>();
-				model = glm::translate( model, glm::vec3(0.f, 0.f, 2.5f + glm::sin( a ) * 0.5f) );
-				model = glm::rotate( model, a, glm::vec3(0.f, 0.f, 1.f) );
-				model = glm::scale( model, glm::vec3(1.5f, 1.5f, 1.5f) );
+		  if( blip.second.target > 0 )
+		  {
+			  auto object = world->getBlipTarget(blip.second);
+			  if( object )
+			  {
+				  model = object->getTimeAdjustedTransform( _renderAlpha );
+			  }
+		  }
+		  else
+		  {
+			  model = glm::translate( model, blip.second.coord );
+		  }
 
-				Renderer::DrawParameters dp;
-				dp.textures = {arrowTex->getName()};
-				dp.ambient = 1.f;
-				dp.colour = glm::u8vec4(255, 255, 255, 255);
+		  float a = world->getGameTime() * glm::pi<float>();
+		  model = glm::translate( model, glm::vec3(0.f, 0.f, 2.5f + glm::sin( a ) * 0.5f) );
+		  model = glm::rotate( model, a, glm::vec3(0.f, 0.f, 1.f) );
+		  model = glm::scale( model, glm::vec3(1.5f, 1.5f, 1.5f) );
 
-				auto geom = arrowModel->resource->geometries[arrowFrame->getGeometries()[0]];
-				Model::SubGeometry& sg = geom->subgeom[0];
+		  Renderer::DrawParameters dp;
+		  dp.textures = {arrowTex->getName()};
+		  dp.ambient = 1.f;
+		  dp.colour = glm::u8vec4(255, 255, 255, 255);
 
-				dp.start = sg.start;
-				dp.count = sg.numIndices;
-				dp.diffuse = 1.f;
+		  auto geom = arrowModel->resource->geometries[arrowFrame->getGeometries()[0]];
+		  Model::SubGeometry& sg = geom->subgeom[0];
 
-				renderer->draw( model, &geom->dbuff, dp );
-			}
+		  dp.start = sg.start;
+		  dp.count = sg.numIndices;
+		  dp.diffuse = 1.f;
+
+		  renderer->draw( model, &geom->dbuff, dp );
 		}
 	}
 

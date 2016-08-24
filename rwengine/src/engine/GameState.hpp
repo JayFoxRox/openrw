@@ -187,21 +187,25 @@ struct BlipData
 	// If target is null then use coord
 	glm::vec3 coord;
 	
-	/* Texture for use in the radar */
-	std::string texture;
+	std::string texture; // Texture for use in the radar
+  uint32_t colour = 0; // Color lookup value (index or RGBA)
+  bool dimmed = false; // Color dimming if not in RGBA mode
+
+  uint16_t size = 3;
 	
 	enum DisplayMode
 	{
 		Hide = 0,
-		RadarOnly = 1,
-		Show = 2
+    MarkerOnly = 1,
+    RadarOnly = 2,
+    ShowBoth = 3
 	};
 	
 	/* Should the blip be displayed? */
 	DisplayMode display;
 	
 	BlipData()
-	: id(-1), type(Location), target(0), display(Show)
+	: id(-1), type(Location), target(0), display(ShowBoth)
 	{ }
 };
 

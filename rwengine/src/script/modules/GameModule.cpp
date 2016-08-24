@@ -338,6 +338,10 @@ void game_add_object_blip(const ScriptArguments& args)
 	}
 
 	data.texture = "";
+  data.colour = 0; // @todo 4 in Vice City
+  data.size = 3;
+  data.display = BlipData::ShowBoth;
+
 	*args[1].globalInteger = args.getWorld()->state->addRadarBlip(data);
 }
 
@@ -348,6 +352,10 @@ void game_add_location_blip(const ScriptArguments& args)
 	/// @todo this might use ground coords if z is -100.0
 	data.coord = glm::vec3(args[0].realValue(), args[1].realValue(), args[2].realValue());
 	data.texture = "";
+  data.colour = 5;
+  data.size = 3;
+  data.display = BlipData::ShowBoth;
+
 	*args[3].globalInteger = args.getWorld()->state->addRadarBlip(data);
 }
 
@@ -362,11 +370,14 @@ void game_change_blip_mode(const ScriptArguments& args)
 		default:
 			blip.display = BlipData::Hide;
 			break;
+		case 1:
+			blip.display = BlipData::MarkerOnly;
+			break;
 		case 2:
 			blip.display = BlipData::RadarOnly;
 			break;
 		case 3:
-			blip.display = BlipData::Show;
+			blip.display = BlipData::ShowBoth;
 			break;
 	}
 }

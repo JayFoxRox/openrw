@@ -40,10 +40,20 @@ private:
 	GeometryBuffer rectGeom;
 	DrawBuffer rect;
 
+	GeometryBuffer triangleGeom;
+	DrawBuffer triangle;
+
 	GeometryBuffer circleGeom;
 	DrawBuffer circle;
 	
 	Renderer::ShaderProgram* rectProg;
+
+  // Helper functions for drawing
+  void prepareBlip(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading);
+  void drawSquareMarker(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading);
+  void drawTriangleMarker(const glm::vec2& coord, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading);
 	
-	void drawBlip(const glm::vec2& map, const glm::mat4& view, const MapInfo& mi, const std::string& texture, float heading = 0.f, float size = 18.f);
+  // Actual drawing functions
+	void drawBlip(const glm::vec2& map, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size, float heading = 0.f);
+  void drawMarker(const glm::vec3& coord, float referenceHeight, const glm::mat4& view, const MapInfo& mi, const std::string& texture, glm::vec4 colour, float size);
 };
