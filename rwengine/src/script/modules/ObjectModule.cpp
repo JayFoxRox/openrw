@@ -690,7 +690,7 @@ bool game_character_in_area_on_foot(const ScriptArguments& args)
 }
 
 template <class T>
-bool game_character_stoped_in_volume_in_vehicle(const ScriptArguments& args)
+bool game_character_stopped_in_volume_in_vehicle(const ScriptArguments& args)
 {
 	auto character = static_cast<CharacterObject*>(args.getObject<T>(0));
 	bool drawCylinder = !!args[7].integer;
@@ -721,9 +721,9 @@ bool game_character_stoped_in_volume_in_vehicle(const ScriptArguments& args)
 
 
 template <class T>
-bool game_character_stoped_in_volume(const ScriptArguments& args)
+bool game_character_stopped_in_volume(const ScriptArguments& args)
 {
-	auto character = static_cast<CharacterObject*>(args.getObject<T>(0));
+	auto character = static_cast<CharacterObject*>(args.getObject<PlayerController>(0));
 	
 	glm::vec3 vec1(args[1].real, args[2].real, args[3].real);
 	glm::vec3 vec2(args[4].real, args[5].real, args[6].real);
@@ -1447,11 +1447,13 @@ ObjectModule::ObjectModule()
 	bindFunction(0x0199, game_character_in_area_or_cylinder<PlayerController>, 6, "Is Player in Area or Cylinder" );
 
 	bindFunction(0x019C, game_character_in_area_on_foot<PlayerController>, 8, "Is Player in Area on Foot" );
-	bindFunction(0x019E, game_character_stoped_in_volume<PlayerController>, 8, "Is Player stopped in volume" );
+	bindFunction(0x019E, game_character_stopped_in_volume<PlayerController>, 8, "Is Player stopped in volume" );
 	
-	bindFunction(0x01A0, game_character_stoped_in_volume_in_vehicle<PlayerController>, 8, "Is Player Stopped in cube in vehicle" );
-	bindFunction(0x01A8, game_character_stoped_in_volume<CharacterObject>, 8, "Is Char Stopped in volume" );
-	bindFunction(0x01AA, game_character_stoped_in_volume_in_vehicle<CharacterObject>, 8, "Is Char Stopped in cube in vehicle" );
+	bindFunction(0x01A0, game_character_stopped_in_volume_in_vehicle<PlayerController>, 8, "Is Player Stopped in Volume In Vehicle" );
+
+	bindFunction(0x01A8, game_character_stopped_in_volume<CharacterObject>, 8, "Is Char Stopped in Volume" );
+
+	bindFunction(0x01AA, game_character_stopped_in_volume_in_vehicle<CharacterObject>, 8, "Is Character Stopped in Volume in Vehicle" );
 
 	bindFunction(0x01AC, game_vehicle_stopped_in_volume, 8, "Is Vehicle Stopped in volume" );
 	bindFunction(0x01AD, game_locate_vehicle_near_point_2D, 6, "Locate Vehicle Near Point 2D" );
