@@ -4396,10 +4396,8 @@ void opcode_0187(const ScriptArguments& args, const ScriptCharacter character, S
 	@arg blip Blip
 */
 void opcode_0188(const ScriptArguments& args, const ScriptObject object, ScriptBlip& blip) {
-	RW_UNIMPLEMENTED_OPCODE(0x0188);
-	RW_UNUSED(object);
-	RW_UNUSED(blip);
-	RW_UNUSED(args);
+	auto& data = script::createObjectBlip(args, object);
+	blip = &data;
 }
 
 /**
@@ -4430,6 +4428,8 @@ void opcode_018a(const ScriptArguments& args, ScriptVec3 coord, ScriptBlip& blip
 	// Coordinate blips are not visible
 	data.display = BlipData::RadarOnly;
 	data.texture = "";
+	data.colour = 5;
+	data.size = 3;
 	args.getState()->addRadarBlip(data);
 	blip = &data;
 }
@@ -4445,6 +4445,9 @@ void opcode_018b(const ScriptArguments& args, const ScriptBlip blip, const Scrip
 	switch (arg2) {
 	default:
 		blip->display = BlipData::Hide;
+		break;
+	case 1:
+		blip->display = BlipData::MarkerOnly;
 		break;
 	case 2:
 		blip->display = BlipData::RadarOnly;
