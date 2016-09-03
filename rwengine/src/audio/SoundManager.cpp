@@ -1,32 +1,13 @@
 #include <audio/SoundManager.hpp>
-#include <audio/MADStream.hpp>
 
 #include "audio/alCheck.hpp"
-#include "audio/MADStream.hpp"
 
 #include <array>
 #include <iostream>
 
 SoundManager::SoundManager()
 {
-	initializeOpenAL();
-}
-
-SoundManager::~SoundManager()
-{
-	// De-initialize OpenAL
-	if(alContext) {
-		alcMakeContextCurrent(NULL);
-		alcDestroyContext(alContext);
-	}
-
-	if(alDevice)
-		alcCloseDevice(alDevice);
-}
-
-bool SoundManager::initializeOpenAL()
-{
-	alDevice = alcOpenDevice(NULL);
+  alDevice = alcOpenDevice(NULL);
 	if ( ! alDevice) {
 		std::cerr << "Could not find OpenAL device!" << std::endl;
 		return false;
@@ -46,6 +27,20 @@ bool SoundManager::initializeOpenAL()
 	return true;
 }
 
+SoundManager::~SoundManager()
+{
+	// De-initialize OpenAL
+	if(alContext) {
+		alcMakeContextCurrent(NULL);
+		alcDestroyContext(alContext);
+	}
+
+	if(alDevice) {
+		alcCloseDevice(alDevice);
+  }
+}
+
+#if 0
 void SoundManager::SoundSource::loadFromFile(const std::string& filename)
 {
 	fileInfo.format = 0;
@@ -75,11 +70,12 @@ SoundManager::SoundBuffer::SoundBuffer()
 	alCheck(alSourcei(source, AL_LOOPING, AL_FALSE));
 }
 
-bool SoundManager::SoundBuffer::bufferData(SoundSource& soundSource)
+
+bool SoundManager::SoundBuffer::bufferData(std::vector<int16_t> data, bool stereo)
 {
 	alCheck(alBufferData(
 		buffer,
-		soundSource.fileInfo.channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
+		stereo ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
 		&soundSource.data.front(),
 		soundSource.data.size() * sizeof(uint16_t),
 		soundSource.fileInfo.samplerate
@@ -114,29 +110,107 @@ bool SoundManager::isLoaded(const std::string& name)
 
 	return false;
 }
-void SoundManager::playSound(const std::string& name)
-{
-	if (sounds.find(name) != sounds.end()) {
-		alCheck(alSourcePlay(sounds[name].buffer.source));
-	}
-}
-void SoundManager::pauseSound(const std::string& name)
-{
-	if (sounds.find(name) != sounds.end()) {
-		alCheck(alSourcePause(sounds[name].buffer.source));
-	}
-}
-bool SoundManager::isPlaying(const std::string& name)
-{
-	if (sounds.find(name) != sounds.end()) {
-		ALint sourceState;
-		alCheck(alGetSourcei(sounds[name].buffer.source, AL_SOURCE_STATE, &sourceState));
-		return AL_PLAYING == sourceState;
-	}
 
-	return false;
+#endif
+
+// Retrieves data from the file loader and appends it to the buffer queue
+void Sound::queueBuffers(std::vector<ALuint> buffers) {
+  for(auto& buffer : buffers) {
+    //FIXME: Repeat this if the current chunk was smaller than the expected chunksize
+    auto data = loader->read(offset, CHUNK_SIZE);
+    alCheck(alBufferData(
+      buffer,
+      loader->isStereo() ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16,
+      data.begin(),
+      data.size() * sizeof(uint16_t),
+      loader->getSamplerate()
+    ));
+    position += data.size / loader->isStereo() ? 2 : 1;
+    alSourceQueueBuffers(source, 1, &buffer);
+    if(alGetError() != AL_NO_ERROR) {
+      fprintf(stderr, "Error buffering :(\n");
+      return 1;
+    }
+  }
 }
 
+Sound* SoundManager::createSound(SoundLoader* loader, bool stream = true)
+{
+  Sound* sound = new Sound();
+  sound->loader = loader;
+
+  // Check if this file should *really* be streamed or if it's small enough
+  if (loader->getSize() <= CHUNK_SIZE) {
+    stream = false;
+  }
+
+  // Create a source to play from buffers
+	alCheck(alGenSources(1, &source));
+
+  // Default configuration
+	alCheck(alSourcef(source, AL_GAIN, 1.0f));
+	alCheck(alSource3f(source, AL_POSITION, 0.0f, 0.0f, 0.0f));
+	alCheck(alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f));
+  setPitch(1.0f);
+  setLooping(false);
+
+  // Create buffers to play from and fill them with data
+  //FIXME: If this is not streaming we can just use the same buffer shared accross all sources
+  unsigned int chunkCount = stream ? 3 : 1;
+  buffers.reserve(chunkCount);
+  alCheck(glGenBuffers(chunkCount, buffers.begin()));
+  Sound::queueBuffers(buffers);
+
+  // List this to the sources which will be managed
+  sources.add(source);
+}
+
+void SoundManager::update() {
+  for(auto source : sources) {
+    // Check if any source has finished processing a buffer
+    ALint freeBufferCount;
+    alGetSourcei(source, AL_BUFFERS_PROCESSED, &freeBufferCount);
+    if(freeBufferCount <= 0) {
+      continue;
+    }
+
+    // Remove the processed buffers, they are free again
+    std::vector<ALuint> buffers;
+    buffers.reserve(freeBufferCount);
+    alSourceUnqueueBuffers(source, freeBufferCount, buffers);
+
+    // As those buffers are free, we'll requeue them
+    queueBuffers(source, buffers);
+  }
+}
+
+// Returns the current time in milliseconds
+uint64_t Sound::getTime() {
+  // Get the actively playing buffer and where that buffer is in global time
+  uint64_t globalOffset = 
+  // Add the local offset within that buffer
+  uint64_t localOffset = 
+  return globalOffset + localOffset;
+}
+void Sound::setPitch(float pitch) {
+	alCheck(alSourcef(source, AL_PITCH, pitch));
+}
+void Sound::setLooping(bool looping) {
+	alCheck(alSourcei(source, AL_LOOPING, looping ? AL_TRUE : AL_FALSE));
+}
+void Sound::play() {
+	alCheck(alSourcePlay(source));
+}
+void Sound::pause() {
+	alCheck(alSourcePause(source));
+}
+bool Sound::isPlaying() {
+  ALint sourceState;
+  alCheck(alGetSourcei(source, AL_SOURCE_STATE, &sourceState));
+  return AL_PLAYING == sourceState;
+}
+
+#if 0
 bool SoundManager::playBackground(const std::string& fileName)
 {
 	if (this->loadSound(fileName, fileName)) {
@@ -187,3 +261,4 @@ void SoundManager::pause(bool p)
 		}
 	}
 }
+#endif
