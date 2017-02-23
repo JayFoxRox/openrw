@@ -71,7 +71,9 @@ void ObjectRenderer::renderGeometry(Model* model,
 					if( ! tex )
 					{
 						//logger->warning("Renderer", "Missing texture: " + tC + " " + tA);
-						dp.textures = { m_errorTexture };
+            //FIXME: Make tA optional in debugLabel
+            auto errorTexture = getErrorTexture("name='" + tC + "';alpha='" + tA + "';missing");
+						dp.textures = { errorTexture->getName() };
 					}
 					mat.textures[0].texture = tex;
 				}

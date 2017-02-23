@@ -1,34 +1,11 @@
 #include <loaders/LoaderTXD.hpp>
 #include <gl/TextureData.hpp>
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 
-GLuint gErrorTextureData[] = { 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF };
-GLuint gDebugTextureData[] = {0xFF0000FF, 0xFF00FF00};
-GLuint gTextureRed[] = {0xFF0000FF};
-GLuint gTextureGreen[] = {0xFF00FF00};
-GLuint gTextureBlue[] = {0xFFFF0000};
-
-TextureData::Handle getErrorTexture()
-{
-	static GLuint errTexName = 0;
-	static TextureData::Handle tex;
-	if(errTexName == 0)
-	{
-		glGenTextures(1, &errTexName);
-		glBindTexture(GL_TEXTURE_2D, errTexName);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA,
-			2, 2, 0,
-			GL_RGBA, GL_UNSIGNED_BYTE, gErrorTextureData
-		);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		tex = TextureData::create(errTexName, {2, 2}, false);
-	}
-	return tex;
-}
+#include <boost/format.hpp>
 
 const size_t paletteSize = 1024;
 void processPalette(uint32_t* fullColor, RW::BinaryStreamSection& rootSection)
@@ -46,29 +23,37 @@ void processPalette(uint32_t* fullColor, RW::BinaryStreamSection& rootSection)
 
 }
 
-TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStreamSection& rootSection)
+TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStreamSection& rootSection, std::string debugLabel = "")
 {
 	// TODO: Exception handling.
 	if(texNative.platform != 8) {
 		std::cerr << "Unsupported texture platform " << std::dec << texNative.platform << std::endl;
-		return getErrorTexture();
+    debugLabel += (boost::format("platform-not-supported:%d;") % texNative.platform).str();
+		return getErrorTexture(debugLabel);
 	}
 
+  debugLabel += (boost::format("rasterformat:0x%X;") % texNative.platform).str();
+
+	bool isPal4 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL4); //FIXME!
 	bool isPal8 = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_PAL8) == RW::BSTextureNative::FORMAT_EXT_PAL8;
-	bool isFulc = texNative.rasterformat == RW::BSTextureNative::FORMAT_1555 ||
-				texNative.rasterformat == RW::BSTextureNative::FORMAT_8888 ||
-				texNative.rasterformat == RW::BSTextureNative::FORMAT_888;
+
+  bool hasMipMaps = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_MIPMAP); //FIXME!
+  bool generateMipMaps = (texNative.rasterformat & RW::BSTextureNative::FORMAT_EXT_MIPMAP); //FIXME!
+
 	// Export this value
 	bool transparent = !((texNative.rasterformat&RW::BSTextureNative::FORMAT_888) == RW::BSTextureNative::FORMAT_888);
 
-	if(! (isPal8 || isFulc)) {
-		std::cerr << "Unsuported raster format " << std::dec << texNative.rasterformat << std::endl;
-		return getErrorTexture();
-	}
+  // Strip the flags away
+  uint32_t rasterformat = texNative.rasterformat & 0xFFF;
 
 	GLuint textureName = 0;
 
-	if(isPal8)
+	if(isPal4)
+	{
+		std::cerr << "Unsuported palette mode" << std::endl;
+		debugLabel += "pal4-not-supported;";
+		return getErrorTexture(debugLabel);
+	} else if(isPal8)
 	{
 		std::vector<uint32_t> fullColor(texNative.width * texNative.height);
 
@@ -82,88 +67,153 @@ TextureData::Handle createTexture(RW::BSTextureNative& texNative, RW::BinaryStre
 			GL_RGBA, GL_UNSIGNED_BYTE, fullColor.data()
 		);
 	}
-	else if(isFulc)
+	else
 	{
+    bool isDxt = (texNative.dxttype != 0x00);
+
 		auto coldata = rootSection.raw() + sizeof(RW::BSTextureNative);
 		coldata += sizeof(uint32_t);
+		coldata += 8;
 
-		GLenum type = GL_UNSIGNED_BYTE, format = GL_RGBA;
-		switch(texNative.rasterformat)
-		{
-			case RW::BSTextureNative::FORMAT_1555:
-				format = GL_RGBA;
-				type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-				break;
-			case RW::BSTextureNative::FORMAT_8888:
-				format = GL_BGRA;
-				//type = GL_UNSIGNED_INT_8_8_8_8_REV;
-				coldata += 8;
-				type = GL_UNSIGNED_BYTE;
-				break;
-			case RW::BSTextureNative::FORMAT_888:
-				format = GL_BGRA;
-				type = GL_UNSIGNED_BYTE;
-				break;
-		default:
-				break;
-		}
+    if(isDxt) {
+      GLenum internalFormat;
+      switch(rasterformat)
+		  {
+		  case RW::BSTextureNative::FORMAT_1555:
+        internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+			  break;
+		  case RW::BSTextureNative::FORMAT_565:
+        internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			  break;
+		  case RW::BSTextureNative::FORMAT_4444:
+        internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+			  break;
+		  default:
+        assert(false); // This should never happen, only the formats above are known.
+        debugLabel += "bad-dxt;";
+        return getErrorTexture(debugLabel);
+		  }
 
-		glGenTextures(1, &textureName);
-		glBindTexture(GL_TEXTURE_2D, textureName);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA,
-			texNative.width, texNative.height, 0,
-			format, type, coldata
-		);
+      // Complain if the s3tc-extension is not available
+      if(!ogl_ext_EXT_texture_compression_s3tc) {
+        static bool warned = false;
+        if (!warned) {
+          std::cerr << "Your graphics driver doesn't support EXT_texture_compression_s3tc. Some textures will not load correctly." << std::endl;
+          warned = true;
+        }
+        debugLabel += "no-s3tc-extension;";
+        return getErrorTexture(debugLabel);
+      }
+
+		  glGenTextures(1, &textureName);
+		  glBindTexture(GL_TEXTURE_2D, textureName);
+		  glCompressedTexImage2D(
+			  GL_TEXTURE_2D, 0, internalFormat,
+			  texNative.width, texNative.height, 0,
+			  texNative.datasize, coldata
+		  );
+    }
+    else
+    {
+	    GLenum type = GL_UNSIGNED_BYTE, format = GL_RGBA;
+	    switch(rasterformat)
+	    {
+		    case RW::BSTextureNative::FORMAT_1555:
+			    format = GL_RGBA;
+			    type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+			    break;
+		    case RW::BSTextureNative::FORMAT_565:
+			    format = GL_RGB;
+			    type = GL_UNSIGNED_SHORT_5_6_5_REV;
+			    break;
+        case RW::BSTextureNative::FORMAT_4444:
+			    format = GL_RGBA;
+			    type = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+          break;
+		    case RW::BSTextureNative::FORMAT_8888:
+			    format = GL_BGRA;
+			    type = GL_UNSIGNED_BYTE;
+			    break;
+		    case RW::BSTextureNative::FORMAT_888:
+			    format = GL_BGRA;
+			    type = GL_UNSIGNED_BYTE;
+			    break;
+	    default:
+          std::cerr << "Unsuported raster format " << std::dec << rasterformat << (isDxt ? " (Compressed)" : "") << std::endl;
+          return getErrorTexture(debugLabel);
+	    }
+		  glGenTextures(1, &textureName);
+		  glBindTexture(GL_TEXTURE_2D, textureName);
+		  glTexImage2D(
+			  GL_TEXTURE_2D, 0, GL_RGBA,
+			  texNative.width, texNative.height, 0,
+			  format, type, coldata
+		  );
+    }
+  }
+
+  auto glTexFilter = [](uint8_t filter, bool mipmap) -> GLenum {
+    switch(filter) {
+    case RW::BSTextureNative::FILTER_NEAREST:
+      return GL_NEAREST;
+    case RW::BSTextureNative::FILTER_LINEAR:
+      return GL_LINEAR;
+    case RW::BSTextureNative::FILTER_MIP_NEAREST:
+			// @todo Verify
+      return mipmap ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
+    case RW::BSTextureNative::FILTER_MIP_LINEAR:
+			// @todo Verify
+      return mipmap ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST;
+    case RW::BSTextureNative::FILTER_LINEAR_MIP_NEAREST:
+      return mipmap ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR;
+    case RW::BSTextureNative::FILTER_LINEAR_MIP_LINEAR:
+      return mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+    case RW::BSTextureNative::FILTER_NONE: // @todo Check what this is
+    default:
+      assert(false);
+      break;
+    }
+    return GL_LINEAR;
+  };
+
+  auto glWrapMode = [](uint8_t mode) -> GLenum {
+    switch(mode) {
+    case RW::BSTextureNative::WRAP_WRAP:
+      return GL_REPEAT;
+    case RW::BSTextureNative::WRAP_CLAMP:
+      return GL_CLAMP_TO_EDGE;
+    case RW::BSTextureNative::WRAP_MIRROR:
+      return GL_MIRRORED_REPEAT;
+    case RW::BSTextureNative::WRAP_NONE: // @todo Check what this is
+    default:
+      assert(false);
+      break;
+    }
+    return GL_REPEAT;
+  };
+
+	bool useMipMaps = false;
+  if (generateMipMaps) {
+	  glGenerateMipmap(GL_TEXTURE_2D);
+		useMipMaps = true;
+	} else if (hasMipMaps) {
+		// @todo Load mipmaps from file instead
+	  glGenerateMipmap(GL_TEXTURE_2D);
+		useMipMaps = true;
 	}
-	else {
-		return getErrorTexture();
-	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glTexFilter(texNative.filterflags, useMipMaps));
 
-	GLenum texFilter = GL_LINEAR;
-	switch(texNative.filterflags & 0xFF) {
-	default:
-	case RW::BSTextureNative::FILTER_LINEAR:
-		texFilter = GL_LINEAR;
-		break;
-	case RW::BSTextureNative::FILTER_NEAREST:
-		texFilter = GL_NEAREST;
-		break;
-	}
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode(texNative.wrapU));
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode(texNative.wrapV));
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFilter);
+	// @todo Maybe the order if these is bad
+	auto wrapU = (texNative.wrap >> 4) & 0xF;
+	auto wrapV = texNative.wrap & 0xF;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode(wrapU));
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode(wrapV));
 
-	GLenum texwrap = GL_REPEAT;
-	switch(texNative.wrapU) {
-	default:
-	case RW::BSTextureNative::WRAP_WRAP:
-		texwrap = GL_REPEAT;
-		break;
-	case RW::BSTextureNative::WRAP_CLAMP:
-		texwrap = GL_CLAMP_TO_EDGE;
-		break;
-	case RW::BSTextureNative::WRAP_MIRROR:
-		texwrap = GL_MIRRORED_REPEAT;
-		break;
-	}
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texwrap );
-
-	switch(texNative.wrapV) {
-	default:
-	case RW::BSTextureNative::WRAP_WRAP:
-		texwrap = GL_REPEAT;
-		break;
-	case RW::BSTextureNative::WRAP_CLAMP:
-		texwrap = GL_CLAMP_TO_EDGE;
-		break;
-	case RW::BSTextureNative::WRAP_MIRROR:
-		texwrap = GL_MIRRORED_REPEAT;
-		break;
-	}
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texwrap );
-
-	glGenerateMipmap(GL_TEXTURE_2D);
+  glObjectLabel(GL_TEXTURE, textureName, -1, debugLabel.c_str());
 
 	return TextureData::create( textureName, { texNative.width, texNative.height }, transparent );
 }
@@ -181,13 +231,21 @@ bool TextureLoader::loadFromMemory(FileHandle file, TextureArchive &inTextures)
 		if (rootSection.header.id != RW::SID_TextureNative)
 			continue;
 
+    std::string debugLabel = "";
 		RW::BSTextureNative texNative = rootSection.readStructure<RW::BSTextureNative>();
-		std::string name = std::string(texNative.diffuseName);
-		std::string alpha = std::string(texNative.alphaName);
-		std::transform(name.begin(), name.end(), name.begin(), ::tolower );
-		std::transform(alpha.begin(), alpha.end(), alpha.begin(), ::tolower );
 
-		auto texture = createTexture(texNative, rootSection);
+		std::string name = std::string(texNative.diffuseName);
+    debugLabel += "name:'" + name + "';";
+		std::transform(name.begin(), name.end(), name.begin(), ::tolower );
+
+    // Get name for the optional alpha texture
+		std::string alpha = std::string(texNative.alphaName);
+    if (alpha != "") {
+        debugLabel += "alpha:'" + alpha + "';";
+		    std::transform(alpha.begin(), alpha.end(), alpha.begin(), ::tolower );
+    }
+
+		auto texture = createTexture(texNative, rootSection, debugLabel);
 
 		inTextures[{name, alpha}] = texture;
 
