@@ -247,10 +247,11 @@ namespace RW
 	
 	struct BSTextureNative
 	{
+    // @todo Use enum types for those defined below
 		uint32_t platform;
-		uint16_t filterflags;
-		uint8_t wrapV;
-		uint8_t wrapU;
+		uint8_t filterflags;
+		uint8_t wrap;
+    uint16_t _pad;
 		char diffuseName[32]; 
 		char alphaName[32];
 		uint32_t rasterformat;
